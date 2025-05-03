@@ -102,16 +102,6 @@ import logging
 logger = logging.getLogger('django')
 logger.setLevel(logging.DEBUG)
 import os
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': os.getenv('DB_NAME', 'school_db'),  # or your DB name
-#         'USER': os.getenv('DB_USER', 'postgres'),   # explicitly set postgres
-#         'PASSWORD': os.getenv('DB_PASSWORD', '1234'),
-#         'HOST': os.getenv('dpg-d0asqt2dbo4c73c6gapg-a.db.render.com', ),
-#         'PORT': os.getenv('DB_PORT', '5432'),
-#     }
-# }
 
 # Database setup for render.com
 import os
