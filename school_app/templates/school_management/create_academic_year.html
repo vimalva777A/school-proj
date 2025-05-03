@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Academic Year</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container mt-5">
+    <h2 class="mb-4">Create Academic Year</h2>
+
+    <!-- Navigation Buttons -->
+    <div class="mb-4">
+        <a href="{% url 'academic_year_list' %}" class="btn btn-outline-primary me-2">
+            View Academic Year List
+        </a>
+        {% if year_id %}
+            <a href="{% url 'working_days_summary' year_id=year_id %}" class="btn btn-outline-success">
+                View Working Days Summary
+            </a>
+        {% else %}
+            <button class="btn btn-outline-secondary" disabled>
+                Working Days (Select Year First)
+            </button>
+        {% endif %}
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} mt-2">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Form -->
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label class="form-label">Academic Year Name</label>
+            <input type="text" name="name" class="form-control" placeholder="e.g. 2024-2025"
+                   value="{{ name }}" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Start Date</label>
+            <input type="date" name="start_date" class="form-control"
+                   value="{{ start_date }}" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">End Date</label>
+            <input type="date" name="end_date" class="form-control"
+                   value="{{ end_date }}" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Create</button>
+    </form>
+</div>
+</body>
+</html>

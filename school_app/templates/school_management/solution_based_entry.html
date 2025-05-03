@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Solution Based Sorting</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            padding: 10px;
+        }
+        nav {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        nav .logo { font-size: 20px; font-weight: bold; }
+        nav .menu { font-size: 14px; }
+        h2 {
+            background-color: #e0f7fa;
+            padding: 10px;
+            margin: 20px 0;
+            text-align: center;
+            border-radius: 5px;
+        }
+        form { margin-top: 10px; }
+        select, input[type="text"], input[type="date"], button {
+            padding: 8px;
+            font-size: 14px;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+        button:hover { background-color: #45a049; }
+        .scroll-container {
+            overflow: auto;
+            max-height: 500px;
+            border: 1px solid #ccc;
+            margin-top: 20px;
+        }
+        table {
+            width: max-content;
+            min-width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+            font-size: 14px;
+        }
+        th {
+            background-color: #f2f2f2;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+        thead tr:first-child th { top: 0; z-index: 3; }
+        thead tr:nth-child(2) th { top: 40px; z-index: 2; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .message-container { margin: 15px 0; }
+        .message {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-left: 5px solid #28a745;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .download-btn {
+            background-color: #007BFF;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .scroll-container {
+                overflow-x: auto;
+            }
+            table, thead, tbody, th, td, tr { display: block; }
+            thead { display: none; }
+            tr {
+                margin-bottom: 15px;
+                border: 1px solid #ccc;
+                padding: 10px;
+            }
+            td {
+                text-align: right;
+                padding-left: 50%;
+                position: relative;
+            }
+            td::before {
+                content: attr(data-label);
+                position: absolute;
+                left: 10px;
+                top: 10px;
+                font-weight: bold;
+                text-align: left;
+                white-space: nowrap;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="logo">School System</div>
+    <div class="menu">Dashboard | Assessments</div>
+</nav>
+
+<h2>Solution Based Sorting</h2>
+
+{% if messages %}
+    <div class="message-container">
+        {% for message in messages %}
+            <div class="message">{{ message }}</div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<form method="get" action="">
+    <label for="class">Select Class:</label>
+    <select name="class_id" onchange="this.form.submit()" required>
+        <option value="">-- Select Class --</option>
+        {% for cls in classes %}
+            <option value="{{ cls.id }}" {% if cls.id|stringformat:"s" == selected_class_id %}selected{% endif %}>
+                {{ cls.name }}
+            </option>
+        {% endfor %}
+    </select>
+</form>
+
+{% if students %}
+    <form method="post" id="assessment-form">
+        {% csrf_token %}
+
+        <label for="assessment_date">Assessment Date:</label>
+        <input type="date" name="assessment_date" required value="{{ today|date:'Y-m-d' }}">
+
+        <div class="scroll-container">
+            <table id="assessment-table">
+                <thead>
+                    <tr>
+                        <th rowspan="2">Student Name</th>
+                        <th rowspan="2">Last Assessment Date</th>
+                        {% for subject in subjects %}
+                            <th colspan="2">{{ subject.name }}</th>
+                        {% endfor %}
+                    </tr>
+                    <tr>
+                        {% for subject in subjects %}
+                            <th>Syllabus</th>
+                            <th>Soft Skill</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                        <tr>
+                            <td data-label="Student Name">{{ student.name }}</td>
+                            <td data-label="Assessment Date">
+                                {% with '' as shown_date %}
+                                    {% for row in assessment_rows %}
+                                        {% if row.student_id == student.id and not shown_date %}
+                                            {{ row.date }}
+                                            {% with 'shown' as shown_date %}{% endwith %}
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endwith %}
+                            </td>
+                            {% for subject in subjects %}
+                                {% with student_id=student.id subject_id=subject.id %}
+                                    {% for row in assessment_rows %}
+                                        {% if row.student_id == student_id and row.subject_id == subject_id %}
+                                            <td data-label="{{ subject.name }} - Syllabus">
+                                                <select name="{{ student_id }}_{{ subject_id }}_syllabus">
+                                                    <option value="">-- Select --</option>
+                                                    {% for option in syllabus_options %}
+                                                        <option value="{{ option.name }}" {% if row.syllabus == option.name %}selected{% endif %}>
+                                                            {{ option.name }}
+                                                        </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </td>
+                                            <td data-label="{{ subject.name }} - Soft Skill">
+                                                <select name="{{ student_id }}_{{ subject_id }}_softskill">
+                                                    <option value="">-- Select --</option>
+                                                    {% for option in softskill_options %}
+                                                        <option value="{{ option.name }}" {% if row.softskill == option.name %}selected{% endif %}>
+                                                            {{ option.name }}
+                                                        </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </td>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endwith %}
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <button type="submit">Save Assessments</button>
+    </form>
+
+    <button onclick="exportToExcel()" class="download-btn">📥 Download to Excel</button>
+
+    <h3 style="margin-top: 30px;">Add New Option</h3>
+    <form method="post">
+        {% csrf_token %}
+        <div style="display: flex; flex-direction: column; gap: 10px; max-width: 400px;">
+            <label for="create_type">Type:</label>
+            <select name="create_type" required>
+                <option value="">-- Select Type --</option>
+                <option value="syllabus">Syllabus</option>
+                <option value="softskill">Soft Skill</option>
+            </select>
+
+            <label for="new_value">New Value:</label>
+            <input type="text" name="new_value" required>
+
+            <button type="submit">Add Option</button>
+        </div>
+    </form>
+
+{% elif selected_class_id %}
+    <p>No students found for this class.</p>
+{% endif %}
+
+<script>
+    function exportToExcel() {
+        const table = document.getElementById("assessment-table");
+        let data = [];
+
+        const headerRows = table.querySelectorAll("thead tr");
+        const topHeaders = Array.from(headerRows[0].querySelectorAll("th"));
+        const subHeaders = Array.from(headerRows[1].querySelectorAll("th"));
+
+        let headers = [topHeaders[0].textContent.trim(), topHeaders[1].textContent.trim()];
+        let subIndex = 0;
+
+        for (let i = 2; i < topHeaders.length; i++) {
+            const subject = topHeaders[i].textContent.trim();
+            headers.push(`${subject} - ${subHeaders[subIndex++].textContent.trim()}`);
+            headers.push(`${subject} - ${subHeaders[subIndex++].textContent.trim()}`);
+        }
+
+        data.push(headers);
+
+        const rows = table.querySelectorAll("tbody tr");
+        rows.forEach(row => {
+            const rowData = [];
+            row.querySelectorAll("td").forEach(cell => {
+                const select = cell.querySelector("select");
+                if (select) {
+                    const value = select.options[select.selectedIndex].text.trim();
+                    rowData.push(value === "-- Select --" ? "" : value);
+                } else {
+                    rowData.push(cell.textContent.trim());
+                }
+            });
+            data.push(rowData);
+        });
+
+        const csv = "data:text/csv;charset=utf-8," + data.map(e => e.join("\t")).join("\n");
+        const encodedUri = encodeURI(csv);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "assessment_data.xls");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    document.getElementById("assessment-form")?.addEventListener("submit", function (e) {
+        const successMsg = document.createElement("div");
+        successMsg.className = "message";
+        successMsg.innerText = "Assessment data submitted successfully!";
+
+        const container = document.querySelector(".message-container") || (() => {
+            const div = document.createElement("div");
+            div.className = "message-container";
+            document.body.insertBefore(div, document.querySelector("form"));
+            return div;
+        })();
+
+        container.innerHTML = "";
+        container.appendChild(successMsg);
+
+        setTimeout(() => {
+            successMsg.remove();
+        }, 3000);
+    });
+</script>
+
+</body>
+</html>

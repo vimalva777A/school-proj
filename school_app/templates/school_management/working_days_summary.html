@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Working Days Summary</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2 class="mb-4 text-center">Working Days Summary for {{ year.name }}</h2>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card border-primary">
+                    <div class="card-body">
+                        <h5 class="card-title">Academic Year</h5>
+                        <p class="card-text"><strong>Start:</strong> {{ year.start_date }}</p>
+                        <p class="card-text"><strong>End:</strong> {{ year.end_date }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card border-success">
+                    <div class="card-body">
+                        <h5 class="card-title">Summary</h5>
+                        <p class="card-text"><strong>Total Days:</strong> {{ total_days }}</p>
+                        <p class="card-text"><strong>Working Days:</strong> {{ working_days }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h4 class="mb-3">Holiday List</h4>
+        {% if holidays %}
+            <table class="table table-bordered table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">Date</th>
+                        <th scope="col">Reason</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for holiday in holidays %}
+                        <tr>
+                            <td>{{ holiday.date }}</td>
+                            <td>{{ holiday.reason }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="alert alert-info" role="alert">
+                No holidays defined for this academic year.
+            </div>
+        {% endif %}
+
+        <div class="mt-4">
+            {% if year.id %}
+                <a href="{% url 'academicyear_change' year.id %}" class="btn btn-primary">
+                    Edit Academic Year
+                </a>
+            {% endif %}
+            <a href="{% url 'holiday_add' %}" class="btn btn-success">
+                Add New Holiday
+            </a>
+        </div>
+    </div>
+</body>
+</html>

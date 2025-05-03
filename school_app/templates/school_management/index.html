@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Welcome to JIEMS</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+  <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+  <style>
+    html {
+      scroll-behavior: smooth;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .hero {
+      background: #f8f9fa;
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 5%;
+    }
+    @media (min-width: 768px) {
+      .hero {
+        flex-direction: row;
+        justify-content: space-between;
+      }
+    }
+    .hero-text h1 {
+      font-size: 4rem;
+      font-weight: bold;
+      margin-bottom: 0.3rem;
+    }
+    .hero-text p {
+      font-size: 1.5rem;
+      margin-top: 0;
+    }
+    .carousel-container {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+    .carousel-inner {
+      width: 100%;
+      max-width: 600px;
+      position: relative;
+      z-index: 2;
+    }
+    @keyframes slow-popup-fade {
+      0% {
+        transform: scale(0.8);
+        opacity: 0;
+      }
+      50% {
+        transform: scale(1.05);
+        opacity: 0.5;
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+    .carousel-item {
+      opacity: 0;
+      transition: opacity 1s ease;
+    }
+    .carousel-item.active {
+      opacity: 1;
+      animation: slow-popup-fade 4s ease-out forwards;
+    }
+    .carousel-item img.main-image {
+      width: 100%;
+      height: auto;
+      object-fit: contain;
+    }
+    .carousel-thumbnail-container {
+      display: flex;
+      flex-wrap: nowrap;
+      overflow-x: auto; /* Allow horizontal scroll */
+      white-space: nowrap;
+      padding: 10px 0; /* Space between thumbnails */
+      width: 100%;
+      justify-content: center; /* Center thumbnails horizontally */
+      overflow: hidden; /* Hide extra images */
+      scroll-behavior: smooth;
+    }
+    .carousel-thumbnail-container img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      margin-right: 10px; /* Spacing between the thumbnails */
+      border-radius: 10px;
+      cursor: pointer;
+      opacity: 0.7;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .carousel-thumbnail-container img:hover {
+      opacity: 1;
+      transform: scale(1);
+    }
+    .carousel-thumbnail-wrapper {
+      overflow: hidden; /* Hide any overflowing images */
+      width: 100%;
+    }
+    .section-title {
+      font-size: 2.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .card {
+      transition: transform 0.3s ease-in-out;
+    }
+    .card:hover {
+      transform: scale(1.05);
+    }
+    .section {
+      padding: 1rem 5%;
+    }
+    .navbar {
+      margin-bottom: 0 !important;
+    }
+    #about {
+      margin-top: 0 !important;
+      padding-top: 0.5rem !important;
+      padding-bottom: 1rem !important;
+    }
+    @media (max-width: 767.98px) {
+      .carousel-thumbnail-container-left,
+      .carousel-thumbnail-container-right {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm sticky-top">
+    <div class="container-fluid">
+      <a class="navbar-brand fw-bold" href="#">JIEMS</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item"><a class="nav-link active" href="#">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="#about">About Us</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'media_gallery' %}">Gallery</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'contact_page' %}">Contact</a></li>
+        </ul>
+        <div class="dropdown">
+          <ul class="navbar-nav me-auto">
+            <li class="nav-item"><a class="nav-link active" href="{% url 'principal_dashboard' %}">Login</a></li>
+          </ul>
+          <!-- <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            Login
+          </button>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="/login/admin">Admin</a></li>
+            <li><a class="dropdown-item" href="/login/teacher">Teacher</a></li>
+            <li><a class="dropdown-item" href="/login/parent">Parent</a></li>
+            <li><a class="dropdown-item" href="/login/student">Student</a></li>
+          </ul> -->
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <section id="about" class="container py-5">
+    <h2 class="text-center lead" data-aos="fade-up" data-aos-delay="100">
+      JIEMS is committed to nurturing academic excellence and character development through a supportive and innovative learning environment.
+    </h2>
+  </section>
+
+  <section id="gallery" class="container py-5">
+    <div class="carousel-container">
+      <div id="carouselExampleIndicators" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-indicators">
+          {% for media in media_files %}
+            {% if media.media_type == 'image' %}
+              <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="{{ forloop.counter0 }}" class="{% if forloop.first %}active{% endif %}" aria-current="true" aria-label="Slide {{ forloop.counter }}"></button>
+            {% endif %}
+          {% endfor %}
+        </div>
+        <div class="carousel-inner">
+          {% for media in media_files %}
+            {% if media.media_type == 'image' %}
+              <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                <img src="{{ media.file.url }}" class="d-block w-100 img-fluid main-image" alt="{{ media.title }}">
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
+          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
+          <span class="carousel-control-next-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Next</span>
+        </button>
+      </div>
+
+      <div class="carousel-thumbnail-wrapper">
+        <div class="carousel-thumbnail-container">
+          {% for media in media_files %}
+            {% if media.media_type == 'image' %}
+              <img src="{{ media.file.url }}" alt="{{ media.title }}" class="thumbnail" />
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="bg-dark text-white text-center p-4 mt-5">
+    <p class="mb-0">&copy; 2025 JIEMS. All rights reserved.</p>
+    <small>123 Main Street, City | Phone: +91-1234567890 | Email: info@yourschool.com</small>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script>
+    AOS.init();
+  </script>
+</body>
+</html>

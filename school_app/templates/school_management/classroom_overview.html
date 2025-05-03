@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classroom Overview</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="container mt-4">
+        <h2 class="text-center">Classroom Overview</h2>
+
+        <!-- Search Box -->
+        <input type="text" id="searchBox" class="form-control mb-3" placeholder="Search for a class...">
+
+        <!-- Classroom Table -->
+        <table class="table table-bordered text-center">
+            <thead>
+                <tr>
+                    <th>Class</th>
+                    <th>Class Teacher</th>
+                    <th>Class Leader</th>
+                    <th>Number of Students</th>
+                    <th>Subjects</th>
+                    <th>Syllabus</th>
+                </tr>
+            </thead>
+            <tbody id="classroomTable">
+                {% for cls in classroom_data %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'class_detail' class_id=cls.id %}" class="btn btn-info btn-sm">
+                                {{ cls.name }}
+                            </a>
+                        </td>
+                        <td>
+                            {% if cls.class_teacher %}
+                                <a href="" class="btn btn-primary btn-sm">
+                                    {{ cls.class_teacher }}
+                                </a>
+                            {% else %}
+                                No Teacher
+                            {% endif %}
+                        </td>
+                        <td>{{ cls.class_leader }}</td>
+                        <td>{{ cls.students_count }}</td>
+                        <td>{{ cls.subjects }}</td>
+                        <td>
+                            {% if cls.syllabus %}
+                                <a href="{{ cls.syllabus }}" target="_blank" class="btn btn-primary btn-sm">View Syllabus</a>
+                            {% else %}
+                                No Syllabus
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6" class="text-center">No classes available</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <a href="/" class="btn btn-secondary">Back to Home</a>
+    </div>
+
+    <script>
+        $(document).ready(function(){
+            $("#searchBox").on("keyup", function() {
+                let value = $(this).val().toLowerCase();
+                $("#classroomTable tr").filter(function() {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

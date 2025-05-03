@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Internal Assessment Entry</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #aaa;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        select, button {
+            margin: 10px 5px;
+        }
+    </style>
+</head>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const classSelect = document.getElementById('class_id');
+        const examSelect = document.getElementById('exam_id');
+
+        const form = classSelect.closest('form');
+
+        function autoSubmitForm() {
+            if (classSelect.value && examSelect.value) {
+                form.submit();
+            }
+        }
+
+        classSelect.addEventListener('change', autoSubmitForm);
+        examSelect.addEventListener('change', autoSubmitForm);
+    });
+</script>
+
+<body>
+
+<h2>Internal Assessment Entry</h2>
+
+<!-- Class and Exam Selector -->
+<form method="get">
+    <label for="class_id">Select Class:</label>
+    <select name="class_id" id="class_id" required>
+        <option value="">-- Select Class --</option>
+        {% for cls in class_list %}
+            <option value="{{ cls.id }}" {% if selected_class_id == cls.id|stringformat:"s" %}selected{% endif %}>{{ cls.name }}</option>
+        {% endfor %}
+    </select>
+
+    <label for="exam_id">Select Exam:</label>
+    <select name="exam_id" id="exam_id" required>
+        <option value="">-- Select Exam --</option>
+        {% for exam in exam_list %}
+            <option value="{{ exam.id }}" {% if selected_exam_id == exam.id|stringformat:"s" %}selected{% endif %}>{{ exam.name }}</option>
+        {% endfor %}
+    </select>
+
+    
+</form>
+
+<!-- Debug Info -->
+{# <p>DEBUG: Students = {{ processed_students|length }} | Subjects = {{ subject_structure|length }}</p> #}
+
+{% if processed_students and subject_structure %}
+    <form method="post">
+        {% csrf_token %}
+        <table>
+            <thead>
+                <tr>
+                    <th rowspan="2">Student Name</th>
+                    {% for subject in subject_structure %}
+                        <th colspan="{{ subject.subsubjects|length }}">{{ subject.subject }}</th>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    {% for subject in subject_structure %}
+                        {% for sub in subject.subsubjects %}
+                            <th>
+                                {{ sub.name }}<br>
+                                <small style="color: #666;">Max: {{ sub.max_marks }}</small>
+                            </th>
+                        {% endfor %}
+                    {% endfor %}
+                </tr>
+            </thead>
+            
+            <tbody>
+                {% for student in processed_students %}
+                    <tr>
+                        <td>{{ student.name }}</td>
+                        {% for subject in subject_structure %}
+                            {% for sub in subject.subsubjects %}
+                                <td>
+                                    <input type="text" name="marks_{{ student.id }}_{{ sub.id }}" style="width:60px;" />
+                                </td>
+                            {% endfor %}
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <br>
+        <button type="submit">Submit Marks</button>
+    </form>
+{% elif selected_class_id and selected_exam_id %}
+    <p style="color: red;"><strong>No students or subject structure available for this class.</strong></p>
+{% endif %}
+
+</body>
+</html>

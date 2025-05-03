@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Class Assignments</title>
+</head>
+<body>
+
+<h2>Assignment Check for Class: {{ school_class.name }}</h2>
+
+{% if count > 0 %}
+    <p><strong>Total Assignments:</strong> {{ count }}</p>
+    <ul>
+        {% for item in assignments %}
+            <li>{{ item.subject.name }} - {{ item.subsubject.name }}</li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p style="color: red;">No assignments found for this class!</p>
+{% endif %}
+
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Assignment Table</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; }
+        .container { max-width: 90%; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); }
+        h2 { text-align: center; color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: center; }
+        th { background-color: #007bff; color: white; }
+        td { background-color: #f9f9f9; }
+        td small { color: #666; }
+        .no-data { color: #999; font-style: italic; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Teacher Assignment Table</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Subject / Class</th>
+                {% for cls in classes %}
+                    <th>{{ cls.name }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in table_data %}
+            <tr>
+                {% for cell in row %}
+                    <td>{{ cell|safe }}</td>  {# Use safe filter to render HTML properly #}
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>

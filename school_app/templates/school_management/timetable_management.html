@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>School Timetable Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f4f7fa;
+        }
+        .content {
+            margin-top: 100px;
+        }
+        .btn-custom {
+            border-radius: 30px;
+        }
+        select {
+            width: 100%;
+        }
+        .loading-spinner {
+            display: none;
+        }
+        .error-alert {
+            display: none;
+            color: red;
+        }
+        .invalid-field {
+            border-color: red;
+        }
+        .nav-link {
+            color: #007bff !important;
+        }
+        .nav-link:hover {
+            color: #0056b3 !important;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-light bg-light fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Timetable Management</a>
+            <ul class="nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'teacher_timetable_pg' %}">Teacher Timetable</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'class_timetable_page' %}">Class Timetable</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'free_teachers' %}">Free Teachers</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'classroom_overview' %}">Classroom Overview</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Settings</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Help</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container content">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">School Timetable Management</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="timetableForm" action="{% url 'save_timetable' %}">
+                    {% csrf_token %}
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label">Select Day</label>
+                            <select id="daySelect" name="day" class="form-select day-dropdown">
+                                {% for day in days %}
+                                    <option value="{{ day }}" {% if timetable_day == day %}selected{% endif %}>{{ day }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Number of Periods</label>
+                            <select id="periodCount" name="period_count" class="form-select" onchange="buildTable()">
+                                {% for p in periods %}
+                                    <option value="{{ p }}" {% if p == default_period %}selected{% endif %}>{{ p }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered text-center" id="timetableTable">
+                            <thead id="timetableHead"></thead>
+                            <tbody id="timetableBody"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="error-alert" id="errorAlert">
+                        <strong>Error:</strong> Some periods might be empty. Please make sure to fill required fields if necessary.
+                    </div>
+
+                    <textarea name="valid_rows" style="display:none;"></textarea>
+
+                    <button type="submit" class="btn btn-primary btn-custom">Save Timetable</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const classes = [{% for cls in classes %}{ id: {{ cls.id }}, name: "{{ cls.name }}" },{% endfor %}];
+
+        $(document).ready(function() {
+            buildTable();
+            $('#daySelect').change(function() {
+                buildTable();
+                loadSavedTimetable($(this).val());
+            });
+        });
+
+        function buildTable() {
+            const day = $('#daySelect').val();
+            const periods = parseInt($('#periodCount').val(), 10);
+
+            let head = '<tr><th>Class</th>';
+            for (let i = 1; i <= periods; i++) {
+                head += `<th>Period ${i}</th>`;
+            }
+            head += '</tr>';
+            $('#timetableHead').html(head);
+
+            let body = '';
+            classes.forEach(cls => {
+                body += `<tr>`;
+                body += `<td>${cls.name}</td>`;
+                for (let i = 1; i <= periods; i++) {
+                    body += `
+                        <td>
+                            <input type="hidden" name="day_name[]" value="${day}">
+                            <input type="hidden" name="class_id[]" value="${cls.id}">
+                            <input type="hidden" name="period_number[]" value="${i}">
+                            
+                            <select name="teacher_id_${day}_${cls.id}_${i}" class="form-select teacher-select" data-class-id="${cls.id}" data-period="${i}" onchange="loadSubjects(this)">
+                                <option value="">-- Teacher --</option>
+                            </select>
+
+                            <select name="subject_id_${day}_${cls.id}_${i}" class="form-select mt-2 subject-select">
+                                <option value="">-- Subject --</option>
+                            </select>
+                        </td>`;
+                }
+                body += `</tr>`;
+            });
+            $('#timetableBody').html(body);
+            loadTeachers();
+            loadSavedTimetable(day);
+        }
+
+        function loadTeachers() {
+            $('.teacher-select').each(function() {
+                const sel = $(this);
+                const cid = sel.data('class-id');
+                fetch(`/get_teachers_by_class/${cid}/`)
+                    .then(res => res.json())
+                    .then(data => {
+                        sel.html('<option value="">-- Teacher --</option>');
+                        if (data.length > 0) {
+                            data.forEach(t => sel.append(`<option value="${t.id}">${t.name}</option>`));
+                        } else {
+                            sel.append('<option value="">No teachers available</option>');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching teachers:', error);
+                        sel.append('<option value="">Error loading teachers</option>');
+                    });
+            });
+        }
+
+        function loadSubjects(selElem) {
+            const sel = $(selElem);
+            const tid = sel.val();
+            const cid = sel.data('class-id');
+            const subjSel = sel.closest('td').find('.subject-select');
+            subjSel.html('<option value="">-- Subject --</option>');
+            if (!tid) return;
+
+            fetch(`/get_subjects_by_teacher_and_class/${tid}/${cid}/`)
+                .then(res => res.json())
+                .then(data => data.forEach(s => subjSel.append(`<option value="${s.id}">${s.name}</option>`)))
+                .catch(error => {
+                    console.error('Error fetching subjects:', error);
+                    subjSel.append('<option value="">Error loading subjects</option>');
+                });
+        }
+
+        function loadSavedTimetable(day) {
+            $.ajax({
+                url: `/get_saved_timetable/${day}/`,
+                method: 'GET',
+                success: function(data) {
+                    data.forEach(entry => {
+                        const teacherSelect = $(`select[name="teacher_id_${day}_${entry.class_id}_${entry.period_number}"]`);
+                        const subjectSelect = $(`select[name="subject_id_${day}_${entry.class_id}_${entry.period_number}"]`);
+
+                        if (entry.teacher_id) {
+                            teacherSelect.val(entry.teacher_id);
+                            teacherSelect.trigger('change'); // Trigger change to load subjects based on teacher
+                        }
+
+                        if (entry.subject_id) {
+                            subjectSelect.val(entry.subject_id);
+                        }
+                    });
+                },
+                error: function(error) {
+                    console.error('Error fetching saved timetable:', error);
+                    alert('Error loading saved timetable data.');
+                }
+            });
+        }
+
+        $('form').submit(function(e) {
+            let validRows = [];
+
+            $('#timetableBody td').each(function () {
+                const teacherId = $(this).find('select[name^="teacher_id_"]').val();
+                const subjectId = $(this).find('select[name^="subject_id_"]').val();
+
+                validRows.push({
+                    day_name: $(this).find('input[name="day_name[]"]').val(),
+                    class_id: $(this).find('input[name="class_id[]"]').val(),
+                    period_number: $(this).find('input[name="period_number[]"]').val(),
+                    teacher_id: teacherId || null,
+                    subject_id: subjectId || null
+                });
+            });
+
+            $('textarea[name="valid_rows"]').val(JSON.stringify(validRows));
+        });
+    </script>
+</body>
+</html>

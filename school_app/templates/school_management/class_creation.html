@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Class</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="container mt-4">
+        <h2 class="text-center">Create a New Class</h2>
+
+        <div id="message" class="alert" style="display:none;"></div>
+
+        <form id="createClassForm">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label">Class Name</label>
+                <input type="text" id="class_name" class="form-control" placeholder="Enter class name" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Create Class</button>
+        </form>
+
+        <h3 class="mt-4">Existing Classes</h3>
+        <ul id="classList" class="list-group mt-2">
+            {% for class in classes %}
+                <li class="list-group-item">{{ class.name }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            function loadClasses() {
+                $.ajax({
+                    type: "GET",
+                    url: "{% url 'get_classes' %}",
+                    success: function(response) {
+                        let classList = $("#classList");
+                        classList.empty();
+                        let existingClasses = [];
+                        response.forEach(cls => {
+                            existingClasses.push(cls.name.toLowerCase());
+                            classList.append(`<li class='list-group-item'>${cls.name}</li>`);
+                        });
+                        existingClasses.sort();
+                    },
+                    error: function() {
+                        console.error("Failed to fetch classes.");
+                    }
+                });
+            }
+            
+            loadClasses();
+
+            $("#createClassForm").submit(function(e) {
+                e.preventDefault();
+                let className = $("#class_name").val().trim();
+
+                if (!className) {
+                    $("#message").removeClass("alert-success").addClass("alert-danger").text("Class name cannot be empty!").show();
+                    return;
+                }
+
+                $.ajax({
+                    type: "POST",
+                    url: "{% url 'create_class' %}",
+                    contentType: "application/json",
+                    data: JSON.stringify({ "name": className }),
+                    headers: { "X-CSRFToken": "{{ csrf_token }}" },
+                    success: function(response) {
+                        if (response.success) {
+                            $("#message").removeClass("alert-danger").addClass("alert-success").text(response.message).show();
+                            loadClasses();
+                            $("#class_name").val("");
+                        } else {
+                            $("#message").removeClass("alert-success").addClass("alert-danger").text(response.message).show();
+                        }
+                    },
+                    error: function(xhr) {
+                        let errorMsg = "Error creating class!";
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMsg = xhr.responseJSON.message;
+                        }
+                        $("#message").removeClass("alert-success").addClass("alert-danger").text(errorMsg).show();
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Attendance - {{ date }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* Global Styles */
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        /* Message Styles */
+        .message {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        /* Class Selection Form */
+        label {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            background-color: #f8f8f8;
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            color: #555;
+        }
+
+        tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .radio-group label {
+            font-size: 14px;
+        }
+
+        .submit-btn {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            background-color: #007BFF;
+            color: #fff;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            select,
+            button {
+                width: 100%;
+                font-size: 14px;
+            }
+
+            table {
+                font-size: 14px;
+            }
+
+            th, td {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h2>Student Attendance - {{ date }}</h2>
+
+        <!-- Display success or error messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="message {% if message.tags == 'success' %}success{% elif message.tags == 'error' %}error{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Class Selection Form -->
+        <form method="get" action="">
+            <label for="class_id">Select Class:</label>
+            <select name="class_id" id="class_id" onchange="this.form.submit()">
+                <option value="">-- Choose Class --</option>
+                {% for cls in classes %}
+                    <option value="{{ cls.id }}" {% if cls.id|stringformat:"s" == selected_class_id %}selected{% endif %}>
+                        {{ cls.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </form>
+
+        <!-- Attendance Form -->
+        {% if students %}
+            <form method="post" action="{% url 'save_attendance' %}">
+                {% csrf_token %}
+                <input type="hidden" name="class_id" value="{{ selected_class_id }}">
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Roll No</th>
+                            <th>Student Name</th>
+                            <th>Attendance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                            <tr>
+                                <td>{{ student.roll_number }}</td>
+                                <td>{{ student.name }}</td>
+                                <td>
+                                    <div class="radio-group">
+                                        <label>
+                                            <input type="radio" name="status_{{ student.id }}" value="Present"
+                                                {% if attendance_status.student.id == "Present" %}checked{% endif %}> Present
+                                        </label>
+                                        <label>
+                                            <input type="radio" name="status_{{ student.id }}" value="Absent"
+                                                {% if attendance_status.student.id == "Absent" %}checked{% endif %}> Absent
+                                        </label>
+                                        <label>
+                                            <input type="radio" name="status_{{ student.id }}" value="Late"
+                                                {% if attendance_status.student.id == "Late" %}checked{% endif %}> Late
+                                        </label>
+                                        <label>
+                                            <input type="radio" name="status_{{ student.id }}" value="Excused"
+                                                {% if attendance_status.student.id == "Excused" %}checked{% endif %}> Excused
+                                        </label>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <div class="submit-btn">
+                    <button type="submit">Save Attendance</button>
+                </div>
+            </form>
+        {% elif selected_class_id %}
+            <p>No students found for the selected class.</p>
+        {% endif %}
+    </div>
+
+</body>
+
+</html>

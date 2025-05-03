@@ -1,0 +1,89 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrator Panel</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .dashboard-container {
+            margin-top: 20px;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+            transition: 0.3s;
+        }
+        .card:hover {
+            transform: scale(1.03);
+        }
+        .sidebar {
+            min-height: 100vh;
+            background-color: #343a40;
+            padding-top: 20px;
+        }
+        .sidebar a {
+            color: white;
+            padding: 10px;
+            display: block;
+            text-decoration: none;
+        }
+        .sidebar a:hover {
+            background-color: #495057;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                min-height: auto;
+                position: relative;
+                width: 100%;
+                text-align: center;
+            }
+            .dashboard-container {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar Navigation -->
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar">
+                <h4 class="text-center text-white">Admin Panel</h4>
+                <a href="#">📂 Student Enrollment</a>
+                <a href="#">👨‍🏫 Teacher Enrollment</a>
+                <a href="#">📋 Manage Students & Teachers</a>
+                <a href="#">📊 Enrollment Reports</a>
+                <a href="#">⚙️ System Settings</a>
+            </nav>
+
+            <!-- Main Dashboard Content -->
+            <main class="col-md-9 col-lg-10 px-md-4 dashboard-container">
+                <h2 class="mt-4">Welcome, Administrator</h2>
+                <p>Use the navigation menu to manage student and teacher enrollments.</p>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card p-3">
+                            <h5>📂 Student Enrollment</h5>
+                            <p>Register new students and assign them to classes.</p>
+                            <a href="#" class="btn btn-primary">Go to Enrollment</a>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card p-3">
+                            <h5>👨‍🏫 Teacher Enrollment</h5>
+                            <p>Register new teachers and assign subjects.</p>
+                            <a href="#" class="btn btn-warning">Go to Enrollment</a>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+</body>
+</html>

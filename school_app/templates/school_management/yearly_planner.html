@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Year Planner</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/5.10.1/main.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/5.10.1/main.min.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">School Dashboard</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/yearly_event_list/">Event List</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'principal_dashboard' %}">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Year Planner</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <div class="card p-4 shadow-lg">
+            <h2 class="text-center">Year Planner</h2>
+            <div id="successMessage" class="alert alert-success d-none"></div>
+            <form id="eventForm" class="mb-4">
+                <div class="mb-3">
+                    <label class="form-label">Event Title</label>
+                    <input type="text" id="eventTitle" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Event Category</label>
+                    <input type="text" id="eventCategory" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" id="eventStart" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">End Date</label>
+                    <input type="date" id="eventEnd" class="form-control" required>
+                </div>
+                <button type="button" class="btn btn-primary w-100" onclick="addEvent()">Create Event</button>
+            </form>
+            <a href="/" class="btn btn-secondary mb-3">Back</a>
+            <div id='calendar'></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('calendar');
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                events: '/get_events/',
+                editable: true,
+                eventClick: function(info) {
+                    let newTitle = prompt('Update event title:', info.event.title);
+                    if (newTitle) {
+                        fetch('/update_event/', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+                            body: JSON.stringify({
+                                id: info.event.id,
+                                title: newTitle
+                            })
+                        }).then(response => response.json())
+                          .then(data => {
+                              if (data.success) {
+                                  info.event.setProp('title', newTitle);
+                              }
+                          });
+                    }
+                }
+            });
+            calendar.render();
+        });
+
+        function addEvent() {
+            let title = document.getElementById("eventTitle").value;
+            let category = document.getElementById("eventCategory").value;
+            let start = document.getElementById("eventStart").value;
+            let end = document.getElementById("eventEnd").value;
+
+            if (title && category && start && end) {
+                fetch('/add_event/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+                    body: JSON.stringify({
+                        title: title,
+                        category: category,
+                        start: start,
+                        end: end
+                    })
+                }).then(response => response.json())
+                  .then(data => {
+                      if (data.success) {
+                          document.getElementById("successMessage").innerText = data.message;
+                          document.getElementById("successMessage").classList.remove("d-none");
+                          setTimeout(() => {
+                              document.getElementById("successMessage").classList.add("d-none");
+                              location.reload();
+                          }, 2000);
+                      }
+                  });
+            } else {
+                alert("Please fill in all fields.");
+            }
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                let cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    let cookie = cookies[i].trim();
+                    if (cookie.startsWith(name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+</html>

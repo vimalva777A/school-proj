@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teacher Dashboard</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <!-- SheetJS for Export to Excel -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <style>
+    body {
+      background-color: #f8f9fa;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .navbar { background-color: #343a40; }
+    .navbar a { color: white; margin-right: 15px; text-decoration: none; }
+    .container { margin-top: 30px; }
+    .table th, .table td { text-align: center; vertical-align: middle; word-wrap: break-word; }
+    .table-hover tbody tr:hover { background-color: #f1f1f1; }
+    .table th { background-color: #007bff; color: white; }
+    .marks-input, .remarks-input { width: 100%; text-align: center; border-radius: 0.25rem; }
+    .btn-save { margin-top: 20px; width: 100%; padding: 12px; font-size: 18px; background-color: #007bff; border: none; color: white; border-radius: 0.25rem; }
+    .btn-save:hover { background-color: #0056b3; }
+    .card { border-radius: 12px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
+    .card-header { background-color: #007bff; color: white; font-weight: bold; }
+    .table-wrapper { overflow-x: auto; max-height: 450px; position: relative; }
+    thead th { position: sticky; top: 0; background-color: #007bff; z-index: 2; }
+    thead tr:nth-child(2) th { top: 44px; }
+    @media (max-width: 767px) {
+      .table th, .table td { font-size: 12px; padding: 8px; }
+    }
+    #loading-spinner { display: none; margin: 10px auto; }
+    .is-invalid { border: 2px solid red !important; background-color: #ffe6e6; }
+    .empty-input { background-color: #ffecb3 !important; }
+
+    /* Print styling (print button reference removed) */
+    @media print {
+      .navbar, #save-marks, #export-excel, #loading-spinner, #filterForm, #search-student {
+        display: none !important;
+      }
+      .card {
+        box-shadow: none;
+        border: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="#">Teacher Dashboard</a>
+    <ul class="navbar-nav flex-row">
+      <li class="nav-item"><a class="nav-link" href="{% url 'internal_assessment_entry' %}">Internal Assessment Entry</a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'teacher_timetable_pg' %}">Teacher's Timetable</a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'class_timetable_page' %}">Class Timetable</a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'solution_based_sorting_view' %}">Solution Based sorting</a></li>
+
+      
+      
+    </ul>
+  </div>
+</nav>
+
+<!-- Main Content -->
+<div class="container">
+  <div class="card">
+    <div class="card-header text-center">
+      <h4>Manage Student Marks</h4>
+    </div>
+    <div class="card-body">
+
+      <!-- Filter Form -->
+      <form id="filterForm" method="GET" action="{% url 'teacher_dashboard' %}" class="row g-3 mb-4">
+        {% csrf_token %}
+        <div class="col-md-6">
+          <select id="class_id" name="class_id" class="form-select" required>
+            <option value="">Select Class</option>
+            {% for class in classes %}
+              <option value="{{ class.id }}" {% if class.id == selected_class_id %}selected{% endif %}>{{ class.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <select id="exam_id" name="exam_id" class="form-select" required>
+            <option value="">Select Exam</option>
+            {% for exam in exams %}
+              <option value="{{ exam.id }}" {% if exam.id == selected_exam_id %}selected{% endif %}>{{ exam.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </form>
+
+      <!-- Search Box -->
+      <div class="mb-3">
+        <input type="text" id="search-student" class="form-control" placeholder="Search by student name...">
+      </div>
+
+      <!-- Table -->
+      <div class="table-wrapper">
+        <table class="table table-bordered table-hover">
+          <thead>
+            <tr>
+              <th rowspan="2">Roll No</th>
+              <th rowspan="2">Student Name</th>
+              {% for subject in subjects %}
+                <th>{{ subject.name }}</th>
+              {% endfor %}
+              <th rowspan="2">Total Marks</th>
+              <th rowspan="2">Percentage</th>
+            </tr>
+            <tr>
+              {% for subject in subjects %}
+                <th>{{ subject.total_marks }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for student in students %}
+              <tr>
+                <td rowspan="2"><a href="{% url 'student_detail' student.id %}" class="text-decoration-none">{{ student.roll_number }}</a></td>
+                <td rowspan="2"><a href="{% url 'student_detail' student.id %}" class="text-decoration-none">{{ student.name }}</a></td>
+                {% for subject in subjects %}
+                  <td><input type="number" class="marks-input form-control" data-student-id="{{ student.id }}" data-subject-id="{{ subject.id }}" min="0" max="{{ subject.total_marks }}" /></td>
+                {% endfor %}
+                <td id="total-{{ student.id }}">0</td>
+                <td id="percentage-{{ student.id }}">0%</td>
+              </tr>
+              <tr>
+                {% for subject in subjects %}
+                  <td><input type="text" class="remarks-input form-control" data-student-id="{{ student.id }}" data-subject-id="{{ subject.id }}" placeholder="Remarks for {{ subject.name }}" maxlength="100" /></td>
+                {% endfor %}
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="{{ subjects|length|add:3 }}" class="text-center">No students found</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Save + Export Buttons (No Print Button) -->
+      <div class="text-center">
+        <button type="button" id="save-marks" class="btn-save mb-3">Save Marks & Remarks</button><br>
+        <button type="button" id="export-excel" class="btn btn-success mb-2">Export to Excel</button>
+        <div class="spinner-border text-primary" id="loading-spinner" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript Section -->
+<script>
+$(document).ready(function() {
+  const csrftoken = (function() {
+    const match = document.cookie.match(/csrftoken=([^;]+)/);
+    return match ? match[1] : null;
+  })();
+  $.ajaxSetup({ headers: { 'X-CSRFToken': csrftoken } });
+
+  const marksData = {{ marks_data|safe }};
+
+  function updateTotalMarks(studentId) {
+    let total = 0, maxTotal = 0;
+    $(`input.marks-input[data-student-id="${studentId}"]`).each(function() {
+      const marks = parseFloat($(this).val()) || 0;
+      const maxMarks = parseFloat($(this).attr('max')) || 0;
+      total += marks;
+      maxTotal += maxMarks;
+    });
+    $(`#total-${studentId}`).text(total.toFixed(2));
+    const percentage = maxTotal ? (total / maxTotal) * 100 : 0;
+    $(`#percentage-${studentId}`).text(percentage.toFixed(2) + "%");
+  }
+
+  $(".marks-input").each(function() {
+    const { studentId, subjectId } = $(this).data();
+    if (marksData[studentId]?.[subjectId]?.marks !== undefined) {
+      $(this).val(marksData[studentId][subjectId].marks);
+      updateTotalMarks(studentId);
+    }
+    if ($(this).val().trim() === "") {
+      $(this).addClass('empty-input');
+    }
+  });
+
+  $(".remarks-input").each(function() {
+    const { studentId, subjectId } = $(this).data();
+    if (marksData[studentId]?.[subjectId]?.remark !== undefined) {
+      $(this).val(marksData[studentId][subjectId].remark);
+    }
+  });
+
+  $(".marks-input").on('input change', function() {
+    const studentId = $(this).data('student-id');
+    const maxMarks = parseFloat($(this).attr('max')) || 0;
+    const currentValue = parseFloat($(this).val()) || 0;
+
+    if (currentValue > maxMarks) {
+      $(this).addClass('is-invalid');
+    } else {
+      $(this).removeClass('is-invalid');
+    }
+    if ($(this).val().trim() === "") {
+      $(this).addClass('empty-input');
+    } else {
+      $(this).removeClass('empty-input');
+    }
+
+    updateTotalMarks(studentId);
+  });
+
+  $("#class_id, #exam_id").change(function() {
+    $("#filterForm").submit();
+  });
+
+  $("#save-marks").click(function() {
+    if (!confirm("Are you sure you want to save all marks and remarks?")) return;
+
+    const marksDataToSave = [];
+    const remarksDataToSave = [];
+    const examId = $("#exam_id").val();
+
+    $("input.marks-input").each(function() {
+      const { studentId, subjectId } = $(this).data();
+      const marksValue = $(this).val().trim();
+      if (marksValue !== "") {
+        marksDataToSave.push({
+          student_id: studentId,
+          subject_id: subjectId,
+          marks: parseFloat(marksValue),
+          exam_id: examId
+        });
+      }
+    });
+
+    $("input.remarks-input").each(function() {
+      const { studentId, subjectId } = $(this).data();
+      const remarkValue = $(this).val().trim();
+      if (remarkValue !== "") {
+        remarksDataToSave.push({
+          student_id: studentId,
+          subject_id: subjectId,
+          remark: remarkValue,
+          exam_id: examId
+        });
+      }
+    });
+
+    $("#loading-spinner").show();
+    $("#save-marks").prop("disabled", true);
+
+    $.ajax({
+      type: "POST",
+      url: "{% url 'update_marks' %}",
+      contentType: "application/json",
+      data: JSON.stringify({ marks_data: marksDataToSave, remarks_data: remarksDataToSave, exam_id: examId }),
+      success: function(response) {
+        $("#loading-spinner").hide();
+        $("#save-marks").prop("disabled", false);
+        Swal.fire('Success!', response.message || 'Marks saved successfully!', 'success');
+      },
+      error: function(xhr) {
+        $("#loading-spinner").hide();
+        $("#save-marks").prop("disabled", false);
+        Swal.fire('Error!', xhr.responseJSON?.error || 'Something went wrong!', 'error');
+      }
+    });
+  });
+
+  $("#search-student").on("keyup", function() {
+    const searchText = $(this).val().toLowerCase();
+    $("table tbody tr").each(function(index, row) {
+      if (index % 2 === 0) {
+        const studentNameCell = $(row).find("td:nth-child(2)");
+        if (studentNameCell.length) {
+          const studentName = studentNameCell.text().toLowerCase();
+          if (studentName.includes(searchText)) {
+            $(row).show();
+            $(row).next("tr").show();
+          } else {
+            $(row).hide();
+            $(row).next("tr").hide();
+          }
+        }
+      }
+    });
+  });
+
+  // Export to Excel
+  $("#export-excel").click(function () {
+    var table = document.querySelector("table");
+
+    var wb = XLSX.utils.book_new();
+    var className = $("#class_id option:selected").text();
+    var examName = $("#exam_id option:selected").text();
+    var today = new Date();
+    var dateStr = today.toISOString().split('T')[0];
+
+    var heading = [
+      ["Class: " + className],
+      ["Exam: " + examName],
+      ["Date: " + dateStr],
+      []
+    ];
+
+    var ws = XLSX.utils.table_to_sheet(table);
+    XLSX.utils.sheet_add_aoa(ws, heading, { origin: "A1" });
+
+    ws['!cols'] = [];
+    for (let i = 0; i < table.rows[0].cells.length; i++) {
+      ws['!cols'].push({ wch: 20 });
+    }
+
+    XLSX.utils.book_append_sheet(wb, ws, "Marks Sheet");
+    XLSX.writeFile(wb, `student_marks_${className}_${examName}_${dateStr}.xlsx`);
+  });
+
+});
+</script>
+
+</body>
+</html>

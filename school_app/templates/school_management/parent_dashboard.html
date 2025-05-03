@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parent Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 1100px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #007BFF;
+            color: white;
+        }
+        .no-data {
+            text-align: center;
+            color: red;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        .logout-btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-top: 20px;
+            text-align: center;
+            background-color: red;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .logout-btn:hover {
+            background-color: darkred;
+        }
+        .low-score {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container mt-5">
+    <h2>Welcome, {{ parent.name }}</h2>  
+
+    <h4>Your Children:</h4>
+    {% if student_data %}
+        {% for data in student_data %}
+            <h5>{{ data.student.name }} (Class: {{ data.student.assigned_class.name }}, Roll Number: {{ data.student.roll_number }}, Phone: {{ data.student.phone }})</h5>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        {% for exam_name, total_marks in data.exam_types.items %}
+                            <th colspan="2">{{ exam_name }}</th>
+                        {% endfor %}
+                    </tr>
+                    <tr>
+                        <th></th>
+                        {% for exam_name in data.exam_types.keys %}
+                            <th>Total Marks</th>
+                            <th>Obtained Marks</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for marks in data.student_marks %}
+                        <tr>
+                            <td>{{ marks.subject_name }}</td>
+                            {% for exam_name, total_marks in data.exam_types.items %}
+                                <td>{{ total_marks }}</td>
+                                <td>
+                                    {% for key, value in marks.items %}
+                                        {% if key == exam_name %}
+                                            {% if value|floatformat:0 < 40 %}
+                                                <span class="low-score">{{ value|floatformat:0|default_if_none:'' }}</span>
+                                            {% else %}
+                                                {{ value|floatformat:0|default_if_none:'' }}
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endfor %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endfor %}
+    {% else %}
+        <p class="no-data">⚠️ No student data available!</p>
+    {% endif %}
+
+    <a href="{% url 'parent_logout' %}" class="logout-btn">Logout</a>
+</div>
+
+</body>
+</html>

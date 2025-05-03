@@ -1,0 +1,65 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Media Gallery</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .media-card {
+      transition: transform 0.2s ease-in-out;
+    }
+    .media-card:hover {
+      transform: scale(1.03);
+    }
+    .video-preview {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+    }
+    .image-preview {
+      max-height: 200px;
+      object-fit: cover;
+    }
+  </style>
+</head>
+<body class="bg-light">
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Media Gallery</h2>
+    <a href="{% url 'media_upload' %}" class="btn btn-primary">Upload New</a>
+  </div>
+
+  <div class="row g-4">
+    {% for media in media_files %}
+      <div class="col-md-4">
+        <div class="card media-card shadow-sm">
+          {% if media.media_type == 'image' %}
+            <img src="{{ media.file.url }}" class="card-img-top image-preview" alt="{{ media.title }}">
+          {% elif media.media_type == 'video' %}
+            <video class="video-preview" controls>
+              <source src="{{ media.file.url }}" type="video/mp4">
+              Your browser does not support the video tag.
+            </video>
+          {% endif %}
+          <div class="card-body">
+            <h5 class="card-title">{{ media.title }}</h5>
+            <p class="card-text text-muted">{{ media.category }}</p>
+            <p class="card-text">{{ media.description|truncatechars:100 }}</p>
+            <p class="card-text"><small class="text-muted">Uploaded: {{ media.uploaded_at|date:"M d, Y" }}</small></p>
+            
+            <!-- Delete button -->
+            <form action="{% url 'delete_media' media.id %}" method="POST" style="display: inline;">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <p class="text-center text-muted">No media uploaded yet.</p>
+    {% endfor %}
+  </div>
+</div>
+</body>
+</html>

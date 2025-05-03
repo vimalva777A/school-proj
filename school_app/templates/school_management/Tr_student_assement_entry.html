@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Attendance System</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">School Management</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#mark-attendance">Mark Attendance</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#view-attendance">View Attendance</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Section -->
+    <div class="container mt-4">
+        <!-- Class Selection -->
+        <div class="row">
+            <div class="col-12">
+                <h2>Select Class for Attendance</h2>
+                <form method="GET" action="">
+                    <div class="mb-3">
+                        <label for="class-select" class="form-label">Select Class</label>
+                        <select name="class_id" id="class-select" class="form-select">
+                            <option value="">-- Select a Class --</option>
+                            {% for school_class in classes %}
+                                <option value="{{ school_class.id }}" {% if school_class.id == selected_class_id %}selected{% endif %}>{{ school_class.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Mark Attendance Section (only shown if class is selected) -->
+        {% if selected_class_id %}
+            <div id="mark-attendance" class="mt-4">
+                <h2 class="text-center">Mark Attendance for Class {{ selected_class_name }} on {{ date }}</h2>
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="table-responsive mt-4">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Attendance Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for student in students %}
+                                    <tr>
+                                        <td>{{ student.name }}</td>
+                                        <td>
+                                            <select name="status_{{ student.id }}" class="form-select">
+                                                <option value="Present" {% if student.id in attendance_dict and attendance_dict[student.id] == 'Present' %}selected{% endif %}>Present</option>
+                                                <option value="Absent" {% if student.id in attendance_dict and attendance_dict[student.id] == 'Absent' %}selected{% endif %}>Absent</option>
+                                                <option value="Late" {% if student.id in attendance_dict and attendance_dict[student.id] == 'Late' %}selected{% endif %}>Late</option>
+                                                <option value="Excused" {% if student.id in attendance_dict and attendance_dict[student.id] == 'Excused' %}selected{% endif %}>Excused</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">Save Attendance</button>
+                    </div>
+                </form>
+            </div>
+        {% endif %}
+
+        <!-- View Attendance Section -->
+        {% if selected_class_id %}
+            <div id="view-attendance" class="mt-5">
+                <h2 class="text-center">Attendance for Class {{ selected_class_name }} on {{ date }}</h2>
+                <div class="table-responsive mt-4">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Attendance Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in students %}
+                                <tr>
+                                    <td>{{ student.name }}</td>
+                                    <td>
+                                        {% if student.id in attendance_dict %}
+                                            {{ attendance_dict[student.id] }}
+                                        {% else %}
+                                            No record
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-light text-center py-3 mt-5">
+        <p>© 2025 School Management System</p>
+    </footer>
+
+    <!-- Bootstrap 5 JS and Popper.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subsubject Management</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <meta name="csrf-token" content="{{ csrf_token }}"> <!-- CSRF Token for AJAX -->
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="row">
+            <!-- Left Side: Subsubject List -->
+            <div class="col-md-4">
+                <h4>Subsubjects</h4>
+                <ul id="subsubject-list" class="list-group">
+                    <!-- Subsubjects will be loaded here -->
+                </ul>
+            </div>
+
+            <!-- Right Side: Form to Add New Subsubject -->
+            <div class="col-md-8">
+                <h4>Manage Subsubjects</h4>
+                <label for="class-select">Select Class:</label>
+                <select id="class-select" class="form-control">
+                    <option value="">-- Select Class --</option>
+                    {% for class in classes %}
+                        <option value="{{ class.id }}">{{ class.name }}</option>
+                    {% endfor %}
+                </select>
+                <br>
+                <label for="subject-select">Select Subject:</label>
+                <select id="subject-select" class="form-control" disabled>
+                    <option value="">-- Select Subject --</option>
+                </select>
+                <br>
+                <label for="new-subsubject">New Subsubject:</label>
+                <input type="text" id="new-subsubject" class="form-control" placeholder="Enter subsubject name">
+                <br>
+                <button id="add-subsubject" class="btn btn-primary">Add Subsubject</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            let csrfToken = $('meta[name="csrf-token"]').attr('content'); // Get CSRF token
+
+            $('#class-select').change(function() {
+                let classId = $(this).val();
+                if (classId) {
+                    $.get('/ajax/get-subjects-by-class/' + classId + '/', function(data) {
+                        $('#subject-select').empty().append('<option value="">-- Select Subject --</option>');
+                        data.forEach(subject => {
+                            $('#subject-select').append(`<option value="${subject.id}">${subject.name}</option>`);
+                        });
+                        $('#subject-select').prop('disabled', false);
+                    });
+                }
+            });
+
+            $('#subject-select').change(function() {
+                let subjectId = $(this).val();
+                if (subjectId) {
+                    $.get('/ajax/get-subsubjects-by-subject/' + subjectId + '/', function(data) {
+                        $('#subsubject-list').empty();
+                        data.forEach(subsubject => {
+                            $('#subsubject-list').append(`
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    ${subsubject.name}
+                                    <button class="btn btn-danger btn-sm delete-subsubject" data-id="${subsubject.id}">Delete</button>
+                                </li>
+                            `);
+                        });
+                    });
+                }
+            });
+
+            $(document).on('click', '.delete-subsubject', function() {
+                let subsubjectId = $(this).data('id');
+                $.ajax({
+                    url: '/ajax/delete-subsubject/' + subsubjectId + '/',
+                    type: 'DELETE',
+                    headers: {
+                        "X-CSRFToken": csrfToken  // Add CSRF token
+                    },
+                    success: function() {
+                        alert('Subsubject deleted successfully');
+                        $('#subject-select').change();
+                    },
+                    error: function(xhr) {
+                        alert('Error: ' + xhr.responseJSON.message);
+                    }
+                });
+            });
+            $('#add-subsubject').click(function() {
+    let subjectId = $('#subject-select').val();
+    let classId = $('#class-select').val();
+    let name = $('#new-subsubject').val();
+
+    if (subjectId && classId && name) {
+        $.ajax({
+            url: '/ajax/create-sub-subject/',
+            type: 'POST',
+            headers: {
+                "X-CSRFToken": csrfToken
+            },
+            data: JSON.stringify({ subject_id: subjectId, name: name, class_id: classId }),
+            contentType: "application/json",
+            success: function(response) {
+                alert(response.message);
+                $('#new-subsubject').val('');
+                $('#subject-select').change(); // Refresh list
+            },
+            error: function(xhr) {
+                alert('Error: ' + xhr.responseJSON.message);
+            }
+        });
+    } else {
+        alert('Please select a class, subject, and enter a subsubject name.');
+    }
+});
+        });
+    </script>
+</body>
+</html>

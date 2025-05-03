@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Timetable</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        .timetable-cell {
+            text-align: center;
+            font-size: 14px;
+            padding: 8px;
+        }
+        .subject {
+            font-weight: bold;
+            color: #007bff;
+        }
+        .class {
+            font-size: 12px;
+            color: #28a745;
+        }
+        .free {
+            font-weight: bold;
+            color: #6c757d;
+        }
+        .break {
+            font-weight: bold;
+            background-color: #f0ad4e;
+            color: white;
+        }
+        th, td {
+            vertical-align: middle;
+        }
+
+        body {
+            padding-top: 60px;
+        }
+
+        @media print {
+            #controls,
+            .navbar,
+            .btn,
+            select {
+                display: none !important;
+            }
+
+            #timetableContainer {
+                margin-top: 20px;
+            }
+
+            body {
+                padding-top: 0 !important;
+                font-size: 12px;
+            }
+
+            #selectedTeacherName {
+                font-size: 20px;
+                font-weight: bold;
+                text-align: center;
+                margin-bottom: 20px;
+            }
+
+            table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+
+            th, td {
+                border: 1px solid #000 !important;
+                padding: 6px !important;
+            }
+
+            @page {
+                size: A4 landscape;
+                margin: 10mm;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-light bg-light fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Timetable Management</a>
+            <ul class="nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active {% if request.path == '/teacher-timetable/' %}active fw-bold{% endif %}" href="{% url 'teacher_timetable_pg' %}">Teacher Timetable</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/class-timetable/' %}active fw-bold{% endif %}" href="{% url 'class_timetable_page' %}">Class Timetable</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'free_teachers' %}">Free Teachers</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'classroom_overview' %}">Classroom Overview</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Settings</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Help</a>
+                </li>
+            </ul>
+            
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h2 class="text-center">Teacher Timetable</h2>
+
+        <!-- Controls -->
+        <div id="controls" class="mb-3 d-flex justify-content-between flex-wrap">
+            <div class="mb-2">
+                <label for="teacherSelect" class="form-label">Select Teacher:</label>
+                <select id="teacherSelect" class="form-control">
+                    <option value="">-- Select Teacher --</option>
+                    {% for teacher in teachers %}
+                        <option value="{{ teacher.id }}">{{ teacher.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="align-self-end mb-2">
+                <button class="btn btn-success me-2" id="exportExcel">Export to Excel</button>
+                <button class="btn btn-primary" onclick="window.print()">Print</button>
+            </div>
+        </div>
+
+        <!-- Selected Teacher Name -->
+        <h4 id="selectedTeacherName" class="text-center mb-3"></h4>
+
+        <!-- Timetable -->
+        <div id="timetableContainer" class="table-responsive">
+            <table class="table table-bordered text-center" id="timetableTable">
+                <thead>
+                    <tr id="headerRow">
+                        <th>Day</th>
+                    </tr>
+                </thead>
+                <tbody id="timetableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function(){
+            $("#teacherSelect").change(function(){
+                const teacherId = $(this).val();
+                const selectedName = $("#teacherSelect option:selected").text();
+                $("#selectedTeacherName").text(`Timetable for: ${selectedName}`);
+
+                if (teacherId) {
+                    $.ajax({
+                        url: `/get_teacher_timetable/${teacherId}/`,
+                        method: "GET",
+                        dataType: "json",
+                        success: function(response){
+                            let originalPeriods = response.periods;
+                            let timetableData = response.timetable;
+
+                            // Find the last used period index
+                            let lastUsedPeriodIndex = -1;
+                            timetableData.forEach(entry => {
+                                originalPeriods.forEach((period, index) => {
+                                    let periodKey = `P${period}`;
+                                    let data = entry[periodKey];
+                                    if (data && data.subject !== "Free" && data.class !== "Free") {
+                                        lastUsedPeriodIndex = Math.max(lastUsedPeriodIndex, index);
+                                    }
+                                });
+                            });
+
+                            let periods = originalPeriods.slice(0, lastUsedPeriodIndex + 1); // Trim unused periods
+
+                            // Build header row
+                            let headerRow = `<th>Day</th>`;
+                            periods.forEach(period => {
+                                headerRow += `<th>P${period}</th>`;
+                            });
+                            $("#headerRow").html(headerRow);
+
+                            // Build timetable body
+                            let tableBody = "";
+                            timetableData.forEach(entry => {
+                                let row = `<tr><td>${entry.day}</td>`;
+                                for (let period of periods) {
+                                    let periodKey = `P${period}`;
+                                    let data = entry[periodKey] || {"subject": "Free", "class": "Free"};
+
+                                    if (data.subject === "Free" && data.class === "Free") {
+                                        row += `<td class="timetable-cell free">Free</td>`;
+                                    } else {
+                                        row += `<td class="timetable-cell">
+                                                    <div class="subject"><strong>${data.subject}</strong></div>
+                                                    <div class="class">${data.class}</div>
+                                                </td>`;
+                                    }
+                                }
+                                row += `</tr>`;
+                                tableBody += row;
+                            });
+                            $("#timetableBody").html(tableBody);
+                        },
+                        error: function(xhr, status, error){
+                            console.error("❌ Error fetching timetable:", error);
+                        }
+                    });
+                } else {
+                    $("#selectedTeacherName").text("");
+                    $("#timetableBody").html("");
+                    $("#headerRow").html(`<th>Day</th>`);
+                }
+            });
+
+            $("#exportExcel").click(function(){
+                const teacherName = $("#selectedTeacherName").text();
+                const wb = XLSX.utils.book_new();
+                const table = document.getElementById("timetableTable");
+                const ws = XLSX.utils.table_to_sheet(table, { origin: 'A3' });
+                XLSX.utils.sheet_add_aoa(ws, [[teacherName]], { origin: 'A1' });
+
+                XLSX.utils.book_append_sheet(wb, ws, "Teacher Timetable");
+                XLSX.writeFile(wb, "Teacher_Timetable.xlsx");
+            });
+        });
+    </script>
+</body>
+</html>

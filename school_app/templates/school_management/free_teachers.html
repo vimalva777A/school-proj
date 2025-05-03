@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Teachers Timetable</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.3/xlsx.full.min.js"></script> <!-- SheetJS for Excel export -->
+    <style>
+        .timetable-cell {
+            text-align: center;
+            font-size: 14px;
+            padding: 8px;
+        }
+        .free-teacher {
+            font-weight: bold;
+            color: #28a745;
+        }
+        .busy {
+            font-weight: bold;
+            color: #d9534f;
+        }
+        th, td {
+            vertical-align: middle;
+        }
+        .navbar {
+            margin-bottom: 20px;
+        }
+        .navbar-brand {
+            font-weight: bold;
+        }
+
+        /* Print-specific CSS */
+        @media print {
+            /* Hide the navigation bar */
+            .navbar {
+                display: none;
+            }
+
+            /* Hide the buttons */
+            .d-flex {
+                display: none;
+            }
+
+            /* Adjust the table to take the full width */
+            #timetableTable {
+                width: 100%;
+            }
+
+            /* Hide the container padding for a clean print */
+            .container {
+                padding-top: 0;
+                padding-bottom: 0;
+            }
+
+            /* Ensure table headers and cells are printed clearly */
+            th, td {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Fixed Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Timetable Management</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'teacher_timetable_pg' %}">Teacher Timetable</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'class_timetable_page' %}">Class Timetable</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{% url 'free_teachers' %}">Free Teachers</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Settings</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Help</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-5 pt-5">
+        <h2 class="text-center">Free Teachers Timetable</h2>
+
+        <!-- Buttons for Export and Print -->
+        <div class="d-flex justify-content-between mb-3">
+            <button class="btn btn-success" id="exportExcel">Export to Excel</button>
+            <button class="btn btn-primary" onclick="window.print()">Print</button>
+        </div>
+
+        <!-- Timetable Display -->
+        <div id="timetableContainer">
+            <table class="table table-bordered text-center" id="timetableTable">
+                <thead>
+                    <tr id="headerRow">
+                        <th>Day</th>
+                    </tr>
+                </thead>
+                <tbody id="timetableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function(){
+            $.ajax({
+                url: "/get_free_teachers_timetable/",
+                method: "GET",
+                dataType: "json",
+                success: function(response){
+                    let periods = response.periods;
+                    let days = response.days;
+                    let freeTeachersData = response.free_teachers;
+
+                    // Initialize header row with only non-empty columns
+                    let headerRow = "<th>Day</th>";
+                    let lastColumnIndex = -1; // To track the last non-empty column
+
+                    // Find the last non-empty period column
+                    periods.forEach((period, index) => {
+                        let columnHasData = false;
+                        days.forEach(day => {
+                            if(freeTeachersData[day]?.[period]?.length > 0) {
+                                columnHasData = true;
+                            }
+                        });
+                        if (columnHasData) {
+                            headerRow += `<th>P${period}</th>`;
+                            lastColumnIndex = index; // Update the last index of columns with data
+                        }
+                    });
+
+                    $("#headerRow").html(headerRow);
+
+                    // Populate table body with free teachers and hide empty columns
+                    let tableBody = "";
+                    days.forEach(day => {
+                        let row = `<tr><td>${day}</td>`;
+                        periods.forEach((period, index) => {
+                            // Only include columns that have data
+                            if (index <= lastColumnIndex) {
+                                let teachersList = freeTeachersData[day]?.[period] || [];
+                                let teachersDisplay = teachersList.length > 0 
+                                    ? `<span class='free-teacher'>${teachersList.join(", ")}</span>` 
+                                    : "<span class='busy'>No Free Teachers</span>";
+                                row += `<td class="timetable-cell">${teachersDisplay}</td>`;
+                            }
+                        });
+                        row += "</tr>";
+                        tableBody += row;
+                    });
+                    $("#timetableBody").html(tableBody);
+                },
+                error: function(xhr, status, error){
+                    console.error("Error fetching free teachers timetable:", error);
+                }
+            });
+        });
+
+        // Export to Excel functionality
+        $("#exportExcel").click(function() {
+            let table = document.getElementById("timetableTable");
+            let workbook = XLSX.utils.table_to_book(table, {sheet: "Free Teachers"});
+            XLSX.writeFile(workbook, "Free_Teachers_Timetable.xlsx");
+        });
+    </script>
+
+    <!-- Bootstrap JS for navbar toggle functionality -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
