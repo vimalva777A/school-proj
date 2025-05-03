@@ -105,7 +105,7 @@ DATABASES = {
         'NAME': os.getenv('DB_NAME', 'school_db'),  # or your DB name
         'USER': os.getenv('DB_USER', 'postgres'),   # explicitly set postgres
         'PASSWORD': os.getenv('DB_PASSWORD', '1234'),
-        'HOST': os.getenv('school_db_xgmw.db.render.com', ),
+        'HOST': os.getenv('dpg-d0asqt2dbo4c73c6gapg-a', ),
         'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
