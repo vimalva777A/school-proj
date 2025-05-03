@@ -85,16 +85,33 @@ WSGI_APPLICATION = 'school_project.wsgi.application'
 #     }
 # }
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'school_db',     # Replace with your actual database name
+#         'USER': 'postgres',     # Replace with your PostgreSQL username
+#         'PASSWORD': '1234',  # Replace with your PostgreSQL password
+#         'HOST': 'localhost',              # Usually 'localhost' if you're running locally
+#         'PORT': '5432',                   # Default PostgreSQL port
+#     }
+# }
+import os
+from django.core.management.utils import get_random_secret_key
+
+import os
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'school_db',     # Replace with your actual database name
-        'USER': 'postgres',     # Replace with your PostgreSQL username
-        'PASSWORD': '1234',  # Replace with your PostgreSQL password
-        'HOST': 'localhost',              # Usually 'localhost' if you're running locally
-        'PORT': '5432',                   # Default PostgreSQL port
+        'NAME': os.getenv('DB_NAME', 'school_db'),  # or your DB name
+        'USER': os.getenv('DB_USER', 'postgres'),   # explicitly set postgres
+        'PASSWORD': os.getenv('DB_PASSWORD', '1234'),
+        'HOST': os.getenv('DB_HOST', 'localhost'),
+        'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
+
+
+# Optionally, if you're using environment variables for the database settings
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
