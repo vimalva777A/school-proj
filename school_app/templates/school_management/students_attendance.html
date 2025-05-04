@@ -14,8 +14,101 @@
             padding: 0;
             background-color: #f9f9f9;
             color: #333;
+            padding-top: 60px; /* Added padding to prevent the content from being hidden under the fixed nav bar */
         }
 
+        /* Navigation Bar Styles */
+        nav {
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
+            width: 100%; /* Make sure it spans the full width */
+        }
+
+        nav .logo {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+        }
+
+        nav ul li {
+            margin-left: 20px;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        nav ul li a:hover {
+            color: #f2f2f2;
+        }
+
+        /* Hamburger Menu */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .hamburger div {
+            width: 25px;
+            height: 3px;
+            background-color: white;
+        }
+
+        @media (max-width: 768px) {
+            .hamburger {
+                display: flex;
+            }
+
+            nav ul {
+                display: none;
+                flex-direction: column;
+                width: 100%;
+                background-color: #333;
+                position: absolute;
+                top: 60px;
+                left: 0;
+                padding: 0;
+                margin: 0;
+            }
+
+            nav ul li {
+                text-align: center;
+                width: 100%;
+                margin: 0;
+            }
+
+            nav ul li a {
+                padding: 15px 0;
+                width: 100%;
+                display: block;
+            }
+
+            nav ul.show {
+                display: flex;
+            }
+        }
+
+        /* Container Styles */
         .container {
             max-width: 1100px;
             margin: 30px auto;
@@ -143,6 +236,21 @@
 
 <body>
 
+    <!-- Navigation Bar -->
+    <nav>
+        <div class="logo">My School</div>
+        <div class="hamburger" onclick="toggleMenu()">
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+        <ul id="nav-links">
+            <li><a href="{% url 'teacher_dashboard' %}">Teacher Dashboard</a></li>
+            <li><a href="{% url 'attendance_list_view' %}">Attendance List</a></li>
+            <li><a href="#">Logout</a></li>
+        </ul>
+    </nav>
+
     <div class="container">
         <h2>Student Attendance - {{ date }}</h2>
 
@@ -191,19 +299,19 @@
                                     <div class="radio-group">
                                         <label>
                                             <input type="radio" name="status_{{ student.id }}" value="Present"
-                                                {% if attendance_status.student.id == "Present" %}checked{% endif %}> Present
+                                                {% if attendance_status.student.id == "Present" %}checked{% endif %} required> Present
                                         </label>
                                         <label>
                                             <input type="radio" name="status_{{ student.id }}" value="Absent"
-                                                {% if attendance_status.student.id == "Absent" %}checked{% endif %}> Absent
+                                                {% if attendance_status.student.id == "Absent" %}checked{% endif %} required> Absent
                                         </label>
                                         <label>
                                             <input type="radio" name="status_{{ student.id }}" value="Late"
-                                                {% if attendance_status.student.id == "Late" %}checked{% endif %}> Late
+                                                {% if attendance_status.student.id == "Late" %}checked{% endif %} required> Late
                                         </label>
                                         <label>
                                             <input type="radio" name="status_{{ student.id }}" value="Excused"
-                                                {% if attendance_status.student.id == "Excused" %}checked{% endif %}> Excused
+                                                {% if attendance_status.student.id == "Excused" %}checked{% endif %} required> Excused
                                         </label>
                                     </div>
                                 </td>
@@ -220,6 +328,13 @@
             <p>No students found for the selected class.</p>
         {% endif %}
     </div>
+
+    <script>
+        function toggleMenu() {
+            const navLinks = document.getElementById('nav-links');
+            navLinks.classList.toggle('show');
+        }
+    </script>
 
 </body>
 

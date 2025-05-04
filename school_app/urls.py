@@ -91,16 +91,13 @@ urlpatterns=[
 
     path('subsubject_management_pg', views.subsubject_management_pg, name='subsubject_management_pg'),
     path('internal_assessment_view', views.internal_assessment_view, name='internal_assessment_view'),
-
     path('teacher_dashboard', views.teacher_dashboard, name='teacher_dashboard'),
-   
     path('assessment_table', views.assessment_table, name='assessment_table'),
 
     path('principal_dashboard', views.principal_dashboard, name='principal_dashboard'),
     path("year_planner/", views.year_planner_view, name="year_planner"),
 
     # Time tables
-
     path("timetable_view", views.timetable_view, name="timetable_view"),
     path("teacher_timetable_pg", views.teacher_timetable_pg, name="teacher_timetable_pg"),
     path("class_timetable_page", views.class_timetable_page, name="class_timetable_page"),  # Renders HTML page
@@ -119,6 +116,7 @@ urlpatterns=[
     path("internal_assessment_entry", views.internal_assessment_entry, name="internal_assessment_entry"),
 # student attendance 
     path('attendance_view', views.attendance_view, name='attendance_view'),
+    path('attendance_list_view', views.attendance_list_view, name='attendance_list_view'),
     path('student_assessment_report', views.student_assessment_report, name='student_assessment_report'), 
     path('student/<int:student_id>/', views.student_detail, name='student_detail'),
     path('student/<int:student_id>/internal-assessment/', views.student_internal_assessment, name='student_internal_assessment'),

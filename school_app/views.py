@@ -2865,44 +2865,67 @@ def attendance_view(request):
     })
 
 
-from django.contrib import messages
 def save_attendance(request):
-    """
-    View to save or update attendance for students in the selected class on the current date.
-    """
     if request.method == 'POST':
-        # Get the selected class ID from the form
         selected_class_id = request.POST.get('class_id')
         school_class = Class.objects.get(id=selected_class_id)
-
-        # Fetch students belonging to the selected class
         students = Student.objects.filter(assigned_class=school_class)
-
-        # Get today's date for marking attendance
         date = now().date()
 
         try:
-            # Iterate through all the students and save their attendance status
             for student in students:
-                # Get the status from the form for each student (e.g., "Present", "Absent", etc.)
                 status = request.POST.get(f'status_{student.id}')
 
-                # Update or create the attendance record for the student
+                # Ensure the status is set
+                if status is None:
+                    # Set a default status (optional) or skip saving this record
+                    raise ValueError(f"Status for student {student.name} is not selected.")
+
                 StudentAttendance.objects.update_or_create(
                     student=student,
                     school_class=school_class,
                     date=date,
-                    defaults={'status': status}  # Set the attendance status
+                    defaults={'status': status}
                 )
 
-            # If everything goes fine, add a success message
             messages.success(request, "Attendance saved successfully.")
         except Exception as e:
-            # If there’s any error, add an error message
             messages.error(request, f"Failed to save attendance: {str(e)}")
 
-        # After saving the attendance, redirect back to the attendance view
         return redirect('attendance_view')
+from django.shortcuts import render
+from .models import Class, Student
+from datetime import datetime
+
+from django.shortcuts import render
+from .models import Class, StudentAttendance
+from datetime import datetime
+
+def attendance_list_view(request):
+    classes = Class.objects.all()
+    selected_class_id = request.GET.get('class_id')
+    selected_date = request.GET.get('date')
+    attendance_records = []
+    selected_class_name = ""
+
+    if selected_class_id and selected_date:
+        try:
+            selected_date_obj = datetime.strptime(selected_date, "%Y-%m-%d").date()
+            attendance_records = StudentAttendance.objects.filter(
+                school_class_id=selected_class_id,
+                date=selected_date_obj
+            ).select_related('student')
+            selected_class_name = Class.objects.get(id=selected_class_id).name
+        except Exception:
+            pass
+
+    return render(request, 'school_management/attendance_list.html', {
+        'classes': classes,
+        'selected_class_id': selected_class_id,
+        'selected_date': selected_date,
+        'selected_class_name': selected_class_name,
+        'attendance_records': attendance_records,
+    })
 
 from django.shortcuts import render
 from django.http import Http404

@@ -78,8 +78,17 @@
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ms-auto">
           <li class="nav-item"><a class="nav-link" href="/student_enrollment">Student Enrollment</a></li>
-          <li class="nav-item"><a class="nav-link" href="/teacher_enrollment_pg">Teacher Enrollment</a></li>
 
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              Admin Tools
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="adminDropdown">
+              <li><a class="dropdown-item" href="/teacher_enrollment_pg">Teacher Enrollment</a></li>
+              <li><a class="dropdown-item" href="/class_creation_pg">Class Creation</a></li>
+              <li><a class="dropdown-item" href="/class_subject_management_pg">Class Subject Management</a></li>
+            </ul>
+          </li>
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="timetableDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Timetable</a>
             <ul class="dropdown-menu" aria-labelledby="timetableDropdown">
