@@ -85,16 +85,16 @@ WSGI_APPLICATION = 'school_project.wsgi.application'
 #     }
 # }
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'school_db',     # Replace with your actual database name
-        'USER': 'postgres',     # Replace with your PostgreSQL username
-        'PASSWORD': '1234',  # Replace with your PostgreSQL password
-        'HOST': 'localhost',              # Usually 'localhost' if you're running locally
-        'PORT': '5432',                   # Default PostgreSQL port
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'school_db',     # Replace with your actual database name
+#         'USER': 'postgres',     # Replace with your PostgreSQL username
+#         'PASSWORD': '1234',  # Replace with your PostgreSQL password
+#         'HOST': 'localhost',              # Usually 'localhost' if you're running locally
+#         'PORT': '5432',                   # Default PostgreSQL port
+#     }
+# }
 import os
 from django.core.management.utils import get_random_secret_key
 import logging
@@ -106,16 +106,16 @@ import os
 # Database setup for render.com
 import os
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': os.getenv('DB_NAME', 'school_db_xgmw'),  # Use the provided database name
-#         'USER': os.getenv('DB_USER', 'school_db_xgmw_user'),  # Use the provided username
-#         'PASSWORD': os.getenv('DB_PASSWORD', '7f8AA0UYhKMgq0al3BMLC1RNaNhAwDMr'),  # Use the provided password
-#         'HOST': os.getenv('DB_HOST', 'dpg-d0asqt2dbo4c73c6gapg-a'),  # Use the provided host
-#         'PORT': os.getenv('DB_PORT', '5432'),  # Use the provided port
-#     }
-# }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('DB_NAME', 'school_db_xgmw'),  # Use the provided database name
+        'USER': os.getenv('DB_USER', 'school_db_xgmw_user'),  # Use the provided username
+        'PASSWORD': os.getenv('DB_PASSWORD', '7f8AA0UYhKMgq0al3BMLC1RNaNhAwDMr'),  # Use the provided password
+        'HOST': os.getenv('DB_HOST', 'dpg-d0asqt2dbo4c73c6gapg-a'),  # Use the provided host
+        'PORT': os.getenv('DB_PORT', '5432'),  # Use the provided port
+    }
+}
 
 # Optionally, if you're using environment variables for the database settings
 
