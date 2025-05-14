@@ -64,6 +64,7 @@
   <div class="container-fluid">
     <a class="navbar-brand" href="#">Teacher Dashboard</a>
     <ul class="navbar-nav flex-row">
+      <li class="nav-item"><a class="nav-link" href="{% url 'attendance_view' %}">Attendance Entry</a></li>
       <li class="nav-item"><a class="nav-link" href="{% url 'internal_assessment_entry' %}">Internal Assessment Entry</a></li>
       <li class="nav-item"><a class="nav-link" href="{% url 'teacher_timetable_pg' %}">Teacher's Timetable</a></li>
       <li class="nav-item"><a class="nav-link" href="{% url 'class_timetable_page' %}">Class Timetable</a></li>
@@ -168,6 +169,7 @@
 
 <!-- JavaScript Section -->
 <script>
+  
 $(document).ready(function() {
   const csrftoken = (function() {
     const match = document.cookie.match(/csrftoken=([^;]+)/);
@@ -334,6 +336,32 @@ $(document).ready(function() {
   });
 
 });
+$(document).ready(function() {
+  // Loop through each remark field
+  $(".remarks-input").each(function() {
+    const { studentId, subjectId } = $(this).data();
+    const remarkValue = $(this).val().trim().toLowerCase();
+
+    // Check if the remark contains "absent" or "excused"
+    if (remarkValue === 'absent' || remarkValue === 'excused') {
+      $(this).css('color', 'red'); // Change text color to red
+    } else {
+      $(this).css('color', 'black'); // Reset to black for other remarks
+    }
+  });
+
+  // Optionally, listen for changes in remarks input
+  $(".remarks-input").on("input", function() {
+    const remarkValue = $(this).val().trim().toLowerCase();
+
+    if (remarkValue === 'absent' || remarkValue === 'excused') {
+      $(this).css('color', 'red'); // Change text color to red
+    } else {
+      $(this).css('color', 'black'); // Reset to black for other remarks
+    }
+  });
+});
+
 </script>
 
 </body>

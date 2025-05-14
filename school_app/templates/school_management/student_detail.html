@@ -4,44 +4,37 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Student Detail - {{ student.name }}</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" />
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.25/dist/jspdf.plugin.autotable.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <!-- JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.25/dist/jspdf.plugin.autotable.min.js" defer></script>
+
+  <!-- Custom Styles -->
   <style>
-    .navbar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 1000;
-      background-color: #007bff;
-    }
-    .navbar .navbar-brand, .navbar .nav-link {
-      color: white;
-      font-weight: bold;
-    }
-    .navbar .nav-link:hover {
-      color: #ffd700;
-    }
-    .dropdown-menu {
-      background-color: #007bff;
-    }
-    .dropdown-item {
-      color: white;
-    }
-    .dropdown-item:hover {
-      background-color: #0056b3;
-      color: #ffd700;
-    }
-    body {
-      padding-top: 70px;
-    }
+    body { padding-top: 70px; background-color: #f8f9fa; }
+    .navbar { position: fixed; top: 0; width: 100%; z-index: 1000; background-color: #007bff; }
+    .navbar .navbar-brand, .navbar .nav-link { color: white; font-weight: bold; }
+    .navbar .nav-link:hover { color: #ffd700; }
+    .dropdown-menu { background-color: #007bff; }
+    .dropdown-item { color: white; }
+    .dropdown-item:hover { background-color: #0056b3; color: #ffd700; }
+    .table th, .table td { border: 1px solid #dee2e6; vertical-align: middle; padding: 0.5rem; }
+    .table-striped tbody tr:nth-of-type(odd) { background-color: #f2f2f2; }
+    .btn-custom { background-color: #28a745; color: white; }
+    .btn-custom:hover { background-color: #218838; }
+    .card-header, .table th { text-align: center; }
+    canvas { max-width: 100%; }
   </style>
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-light">
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark">
   <div class="container-fluid">
     <a class="navbar-brand" href="#">School Management</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -50,188 +43,189 @@
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav">
         <li class="nav-item">
-          <a class="nav-link {% if request.path == '/student_assessment_report/' %}active{% endif %}" href="{% url 'student_assessment_report' %}">Student Assessment List</a>
+          <a class="nav-link {% if request.path == '/student_assessment_report/' %}active{% endif %}" href="{% url 'student_assessment_report' %}">Assessment List</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="{% url 'student_internal_assessment' student.id %}">View Internal Assessment</a>
+          <a class="nav-link" href="{% url 'student_internal_assessment' student.id %}">Internal Assessment</a>
         </li>
       </ul>
     </div>
   </div>
 </nav>
 
-<div class="container mt-4">
-  <h2>{{ student.name }}</h2>
+<!-- Main Content -->
+<main class="container mt-5">
+  <h2 class="mb-4 text-center">{{ student.name }}</h2>
 
-  <div class="row mt-4">
-    <div class="col-md-6">
-      <h4>Student Information</h4>
-      <table class="table table-bordered table-sm">
-        <tbody>
-          <tr><th>Name</th><td>{{ student.name }}</td></tr>
-          <tr><th>Class</th><td>{{ class_name }}</td></tr>
-          <tr><th>Parent Name</th><td>{{ parent.name }}</td></tr>
-          <tr><th>Parent Email</th><td>{{ parent.email }}</td></tr>
-          <tr><th>Parent Phone</th><td>{{ parent.phone_number }}</td></tr>
-        </tbody>
-      </table>
-    </div>
+  <div class="row">
+    <!-- Student Info -->
+    <section class="col-md-6 mb-4">
+      <div class="card">
+        <div class="card-header bg-primary text-white">Student Information</div>
+        <div class="card-body">
+          <table class="table table-sm table-bordered mb-0">
+            <tr><th>Name</th><td>{{ student.name }}</td></tr>
+            <tr><th>Class</th><td>{{ class_name }}</td></tr>
+            <tr><th>Parent Name</th><td>{{ parent.name }}</td></tr>
+            <tr><th>Email</th><td>{{ parent.email }}</td></tr>
+            <tr><th>Phone</th><td>{{ parent.phone_number }}</td></tr>
+          </table>
+        </div>
+      </div>
+    </section>
 
-    <div class="col-md-6">
-      <h4>Attendance Records</h4>
-      <table class="table table-bordered table-striped">
-        <thead><tr><th>Date</th><th>Status</th></tr></thead>
-        <tbody>
-          {% for attendance in attendance_records %}
-            <tr><td>{{ attendance.date }}</td><td>{{ attendance.status }}</td></tr>
-          {% empty %}
-            <tr><td colspan="2">No attendance records available.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+    <!-- Attendance Summary -->
+    <section class="col-md-6 mb-4">
+      <div class="card">
+        <div class="card-header bg-primary text-white">Attendance Summary</div>
+        <div class="card-body">
+          <table class="table table-sm table-bordered table-striped mb-0">
+            <thead><tr><th>Status</th><th>Count</th></tr></thead>
+            <tr><td>Present</td><td>{{ attendance_counts.Present }}</td></tr>
+            <tr><td>Absent</td><td>{{ attendance_counts.Absent }}</td></tr>
+            <tr><td>Late</td><td>{{ attendance_counts.Late }}</td></tr>
+            <tr><td>Excused</td><td>{{ attendance_counts.Excused }}</td></tr>
+            <tr><td>Total Working Days</td><td>{{ total_working_days }}</td></tr>
+          </table>
+        </div>
+      </div>
+    </section>
   </div>
 
-  <div class="mt-4 card">
-    <div class="card-header bg-primary text-white"><h4 class="mb-0">Exam Results</h4></div>
+  <!-- Exam Results -->
+  <section class="card mb-4">
+    <div class="card-header bg-primary text-white"><h5 class="mb-0">Exam Results</h5></div>
     <div class="card-body">
-      <form method="get" id="filter-form" class="mb-4">
-        <div class="row">
-          <div class="col-md-6">
-            <label for="exam" class="form-label">Exam</label>
-            <select name="exam" id="exam" class="form-select" onchange="updateFilters()">
-              <option value="" {% if not selected_exam_id %}selected{% endif %}>All Exams</option>
-              {% for exam in exams %}
-                <option value="{{ exam.id }}" {% if exam.id == selected_exam_id %}selected{% endif %}>{{ exam.name }}</option>
-              {% endfor %}
-            </select>
-          </div>
-        </div>
+      <form method="get" id="filter-form" class="mb-3">
+        <label for="exam" class="form-label">Exam</label>
+        <select name="exam" id="exam" class="form-select" onchange="this.form.submit()">
+          <option value="" {% if not selected_exam_id %}selected{% endif %}>All Exams</option>
+          {% for exam in exams %}
+            <option value="{{ exam.id }}" {% if exam.id|stringformat:"s" == selected_exam_id|stringformat:"s" %}selected{% endif %}>
+              {{ exam.name }}
+            </option>
+          {% endfor %}
+        </select>
       </form>
 
-      <table class="table table-bordered table-striped">
-        <thead>
-          <tr><th>Subject</th><th>Marks Obtained</th><th>Total Marks</th><th>Percentage</th><th>Remarks</th></tr>
-        </thead>
-        <tbody>
-          {% for subject_id, subject_data in marks_data.items %}
-            <tr>
-              <td>{{ subject_data.subject.name }}</td>
-              <td>{{ subject_data.marks_obtained }}</td>
-              <td>{{ subject_data.total_marks }}</td>
-              <td>{{ subject_data.percentage }}%</td>
-              <td>{{ subject_data.remark }}</td>
+      <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+          <thead class="table-light">
+            <tr><th>Subject</th><th>Obtained</th><th>Total</th><th>Percentage</th><th>Remarks</th></tr>
+          </thead>
+          <tbody>
+            {% for subject_id, subject_data in marks_data.items %}
+              <tr>
+                <td>{{ subject_data.subject.name }}</td>
+                <td>{{ subject_data.marks_obtained }}</td>
+                <td>{{ subject_data.total_marks }}</td>
+                <td>{{ subject_data.percentage }}%</td>
+                <td>{{ subject_data.remark }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="5" class="text-center">No exam results available.</td></tr>
+            {% endfor %}
+          </tbody>
+          {% if total_marks_obtained %}
+          <tfoot>
+            <tr class="table-primary fw-bold">
+              <td>Total</td>
+              <td>{{ total_marks_obtained }}</td>
+              <td>{{ total_max_marks }}</td>
+              <td>{{ percentage }}%</td>
+              <td>-</td>
             </tr>
-          {% empty %}
-            <tr><td colspan="5">No exam results available.</td></tr>
-          {% endfor %}
-        </tbody>
-        {% if total_marks_obtained %}
-        <tfoot>
-          <tr class="table-primary fw-bold">
-            <td>Total</td>
-            <td>{{ total_marks_obtained }}</td>
-            <td>{{ total_max_marks }}</td>
-            <td>{{ percentage }}%</td>
-            <td>-</td>
-          </tr>
-        </tfoot>
-        {% endif %}
-      </table>
+          </tfoot>
+          {% endif %}
+        </table>
+      </div>
     </div>
+  </section>
+
+  {% if total_marks_obtained %}
+  <!-- Performance Chart -->
+  <section class="card mb-4">
+    <div class="card-header bg-primary text-white"><h5 class="mb-0">Performance Chart</h5></div>
+    <div class="card-body">
+      <canvas id="performanceChart"></canvas>
+    </div>
+  </section>
+
+  <!-- Export Button -->
+  <div class="text-end mb-5">
+    <button id="export-pdf" class="btn btn-custom">Export as PDF</button>
   </div>
+  {% endif %}
+</main>
 
-  <div class="mt-4">
-    <h5>Performance Chart</h5>
-    <canvas id="performanceChart"></canvas>
-  </div>
-
-  <button id="export-pdf" class="btn btn-success mt-3">Export PDF</button>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-
+<!-- Chart & PDF Script -->
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    // Chart setup
-    const ctx = document.getElementById('performanceChart').getContext('2d');
-    const chart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: [{% for subject_id, subject_data in marks_data.items %}"{{ subject_data.subject.name }}",{% endfor %}],
-        datasets: [{
-          label: 'Percentage',
-          data: [{% for subject_id, subject_data in marks_data.items %}{{ subject_data.percentage }},{% endfor %}],
-          backgroundColor: '#007bff',
-          borderRadius: 6
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: false }
+  document.addEventListener('DOMContentLoaded', () => {
+    const labels = [{% for _, subject_data in marks_data.items %}"{{ subject_data.subject.name }}",{% endfor %}];
+    const dataValues = [{% for _, subject_data in marks_data.items %}{{ subject_data.percentage }},{% endfor %}];
+
+    if (labels.length > 0 && document.getElementById('performanceChart')) {
+      const ctx = document.getElementById('performanceChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Percentage',
+            data: dataValues,
+            backgroundColor: '#007bff',
+            borderRadius: 5
+          }]
         },
-        scales: {
-          y: {
-            beginAtZero: true,
-            max: 100,
-            title: { display: true, text: 'Percentage' }
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: true }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              title: { display: true, text: 'Percentage' }
+            }
           }
         }
-      }
-    });
-
-    // PDF Export with Table
-    document.getElementById('export-pdf').addEventListener('click', function () {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-
-      doc.setFontSize(16);
-      doc.text('Student Report', 14, 20);
-
-      const studentInfo = [
-        ['Name', '{{ student.name }}'],
-        ['Class', '{{ class_name }}'],
-        ['Parent Name', '{{ parent.name }}'],
-        ['Parent Email', '{{ parent.email }}'],
-        ['Parent Phone', '{{ parent.phone_number }}'],
-      ];
-
-      doc.autoTable({
-        head: [['Field', 'Value']],
-        body: studentInfo,
-        startY: 30
       });
+    }
 
-      // Add Exam Name to PDF
-      {% if selected_exam_name %}
-        doc.text('Exam: {{ selected_exam_name }}', 14, doc.lastAutoTable.finalY + 10);
-      {% endif %}
+    const exportBtn = document.getElementById('export-pdf');
+    if (exportBtn) {
+      exportBtn.addEventListener('click', () => {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.setFontSize(16);
+        doc.text('Student Report', 14, 20);
 
-      const examMarks = [
-        {% for subject_id, subject_data in marks_data.items %}
-          ['{{ subject_data.subject.name }}', '{{ subject_data.marks_obtained }}', '{{ subject_data.total_marks }}', '{{ subject_data.percentage }}%', '{{ subject_data.remark }}'],
+        const studentInfo = [
+          ['Name', '{{ student.name }}'],
+          ['Class', '{{ class_name }}'],
+          ['Parent Name', '{{ parent.name }}'],
+          ['Email', '{{ parent.email }}'],
+          ['Phone', '{{ parent.phone_number }}']
+        ];
+        doc.autoTable({ head: [['Field', 'Value']], body: studentInfo, startY: 30 });
+
+        const results = [];
+        {% for _, subject_data in marks_data.items %}
+          results.push(["{{ subject_data.subject.name }}", "{{ subject_data.marks_obtained }}", "{{ subject_data.total_marks }}", "{{ subject_data.percentage }}%", "{{ subject_data.remark }}"]);
         {% endfor %}
-      ];
 
-      doc.autoTable({
-        head: [['Subject', 'Obtained', 'Total', 'Percentage', 'Remark']],
-        body: examMarks,
-        startY: doc.lastAutoTable.finalY + 10
+        doc.autoTable({
+          head: [['Subject', 'Obtained', 'Total', 'Percentage', 'Remarks']],
+          body: results,
+          startY: doc.lastAutoTable.finalY + 10
+        });
+
+        doc.save("student_report.pdf");
       });
-
-      // Add Chart Image
-      const canvas = document.getElementById('performanceChart');
-      const imgData = canvas.toDataURL('image/png');
-      doc.addImage(imgData, 'PNG', 15, doc.lastAutoTable.finalY + 10, 180, 80);
-
-      doc.save('{{ student.name }}_report.pdf');
-    });
+    }
   });
-
-  function updateFilters() {
-    document.getElementById('filter-form').submit();
-  }
 </script>
 
 </body>

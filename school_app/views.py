@@ -156,10 +156,6 @@ def delete_subject(request):
 
     return JsonResponse({"success": False, "message": "Invalid request method!"}, status=405)
 
-# Load Student Enrollment Page
-def student_enrollment(request):
-    classes = Class.objects.all()
-    return render(request, "school_management/student_enrollment.html", {"classes": classes})
 
 
 from django.shortcuts import render, get_object_or_404
@@ -179,42 +175,71 @@ from django.contrib.auth.hashers import make_password
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Parent, Student, Class
-
 from django.http import JsonResponse
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.hashers import make_password
 import random
 import string
+import logging
 
+from .models import Student, Parent, Class, AcademicYear
+
+logger = logging.getLogger(__name__)
+
+
+# Utility: Generate a unique parent ID (e.g., p1234)
 def generate_parent_id():
-    """Generate a unique Parent ID (e.g., p2222)"""
     while True:
         parent_id = f"p{random.randint(1000, 9999)}"
         if not Parent.objects.filter(username=parent_id).exists():
             return parent_id
 
+
+# Utility: Generate a simple password like "p1234p"
 def generate_parent_password():
-    """Generate a simple password like 'p2222p'"""
     digits = ''.join(random.choices(string.digits, k=4))
     return f"p{digits}p"
+
+
+# Page loader for student enrollment
+def student_enrollment(request):
+    classes = Class.objects.all()
+    academic_years = AcademicYear.objects.order_by('-start_date')
+    return render(
+        request,
+        "school_management/student_enrollment.html",
+        {"classes": classes, "academic_years": academic_years}
+    )
+
+
+# Student enrollment handler
 def enroll_student(request):
     if request.method == "POST":
         try:
+            # Extract form data
             name = request.POST.get("name", "").strip()
             parent_name = request.POST.get("parent_name", "").strip()
             phone = request.POST.get("phone", "").strip()
             aadhar = request.POST.get("aadhar", "").strip()
             email = request.POST.get("email", "").strip() or None
             address = request.POST.get("address", "").strip()
-            category = request.POST.get("category", "General")
+            category = request.POST.get("category", "General").strip()
             class_id = request.POST.get("assigned_class")
+            academic_year_id = request.POST.get("academic_year")
 
-            if not all([name, parent_name, phone, class_id, aadhar]):
+            # Validate required fields
+            if not all([name, parent_name, phone, class_id, aadhar, academic_year_id]):
                 return JsonResponse({"error": "All required fields must be filled!"}, status=400)
 
+            # Validate existence of related records
             assigned_class = get_object_or_404(Class, id=class_id)
+            academic_year = get_object_or_404(AcademicYear, id=academic_year_id)
 
+            # Generate login credentials for parent
             parent_password = generate_parent_password()
             parent_id = generate_parent_id()
 
+            # Create or fetch parent
             parent, created = Parent.objects.get_or_create(
                 phone=phone,
                 defaults={
@@ -227,26 +252,29 @@ def enroll_student(request):
                 }
             )
 
+            # Create student record
             student = Student.objects.create(
                 name=name,
                 phone=phone,
                 aadhar=aadhar,
                 email=email,
-                assigned_class=assigned_class,
-                category=category,
                 address=address,
+                assigned_class=assigned_class,
+                academic_year=academic_year,
+                category=category,
                 parent=parent
             )
 
             return JsonResponse({
                 "success": f"Student {name} enrolled successfully!",
-                "roll_number": student.roll_number,  
-                "parent_id": parent.username if created else parent_id,
-                "password": parent_password
+                "roll_number": student.roll_number,
+                "parent_id": parent.username,
+                "password": parent_password if created else "Already registered"
             })
 
         except Exception as e:
-            return JsonResponse({"error": str(e)}, status=500)
+            logger.error(f"Error enrolling student: {str(e)}", exc_info=True)
+            return JsonResponse({"error": "Something went wrong. Please check input data or database setup."}, status=500)
 
     return JsonResponse({"error": "Invalid request method!"}, status=405)
 
@@ -2038,72 +2066,128 @@ def contact_page(request):
 
     return render(request, 'school_management/contact.html')
 
+from django.views.decorators.http import require_http_methods
+from django.shortcuts import render
+import json
 @require_http_methods(["GET"])
 def teacher_dashboard(request):
-    # Get class_id and exam_id from URL query parameters
-    class_id = request.GET.get('class_id', None)
-    exam_id = request.GET.get('exam_id', None)
+    # Fetch GET parameters for class and exam
+    class_id = request.GET.get('class_id')
+    exam_id = request.GET.get('exam_id')
 
-    # Master data (classes, exams, students, subjects)
+    # Fetch all classes, exams, students, and subjects
     classes = Class.objects.all()
     exams = Exam.objects.all()
     students = Student.objects.all()
     subjects = Subject.objects.all()
 
     # Validate and sanitize class_id
-    if class_id and not class_id.isdigit():
-        class_id = None  # Invalid class_id
     if class_id:
-        class_id = int(class_id)
-        # Ensure class exists
-        if not classes.filter(id=class_id).exists():
-            class_id = None  # Invalid class_id
+        try:
+            class_id = int(class_id)
+            if not classes.filter(id=class_id).exists():
+                class_id = None
+        except ValueError:
+            class_id = None
 
     # Validate and sanitize exam_id
-    if exam_id and not exam_id.isdigit():
-        exam_id = None  # Invalid exam_id
     if exam_id:
-        exam_id = int(exam_id)
-        # Ensure exam exists
-        if not exams.filter(id=exam_id).exists():
-            exam_id = None  # Invalid exam_id
+        try:
+            exam_id = int(exam_id)
+            if not exams.filter(id=exam_id).exists():
+                exam_id = None
+        except ValueError:
+            exam_id = None
 
-    # Efficient filtering using select_related
+    # Filter students by class if class_id is provided
     if class_id:
-        students = students.filter(assigned_class_id=class_id).select_related('assigned_class')
-        subject_ids = Teacher_Subject_Class_Relation.objects.filter(
-            assigned_classes__id=class_id
-        ).values_list('subject_id', flat=True).distinct()
+        students = students.filter(assigned_class_id=class_id)
+        subject_ids = Teacher_Subject_Class_Relation.objects.filter(assigned_classes__id=class_id).values_list('subject_id', flat=True).distinct()
         subjects = subjects.filter(id__in=subject_ids)
 
-    # Fetch exam schedules if exam_id is valid
-    schedules = ExamSchedule.objects.none()  # Default value for schedules
+    # Initialize exam schedule
+    schedules = ExamSchedule.objects.none()
     if exam_id:
         schedules = ExamSchedule.objects.filter(exam_id=exam_id)
         if class_id:
             schedules = schedules.filter(school_class_id=class_id)
 
-    # Create dictionary to map subjects to their total marks
+    # Map subjects to total marks for the exam
     total_marks_dict = {sch.subject.id: sch.total_marks for sch in schedules}
     for subj in subjects:
         subj.total_marks = total_marks_dict.get(subj.id, 0)
 
-    # Prepare nested marks data: student -> subject -> {'marks', 'remark'}
+    # Prepare marks and remarks data
     marks_data = {}
     if exam_id:
-        # Only include marks/remarks for filtered students
         marks_qs = Marks.objects.filter(exam_id=exam_id, student__in=students)
         remarks_qs = StudentSubjectRemark.objects.filter(exam_id=exam_id, student__in=students)
 
-        # Populate marks data
-        for m in marks_qs:
-            marks_data.setdefault(str(m.student_id), {}).setdefault(str(m.subject_id), {})['marks'] = m.marks_obtained
-        
-        # Populate remarks data
-        for r in remarks_qs:
-            marks_data.setdefault(str(r.student_id), {}).setdefault(str(r.subject_id), {})['remark'] = r.remark
+        # Build attendance lookup: {(student_id, date): status}
+        attendance_qs = StudentAttendance.objects.filter(
+            student__in=students,
+            status__in=['Absent', 'Excused']
+        )
+        attendance_lookup = {
+            (att.student_id, att.date): att.status
+            for att in attendance_qs
+        }
 
-    # Context data to pass to the template
+        # Map subject_id to exam date
+        subject_exam_dates = {
+            sch.subject_id: sch.date for sch in schedules
+        }
+
+        # Process marks and add attendance status to remarks
+        for m in marks_qs:
+            student_id = str(m.student_id)
+            subject_id = str(m.subject_id)
+            exam_date = subject_exam_dates.get(m.subject_id)
+
+            display_value = m.marks_obtained  # Default mark
+
+            # If exam date exists, check attendance status
+            if exam_date:
+                attendance_status = attendance_lookup.get((m.student_id, exam_date))
+                if attendance_status == 'Absent':
+                    display_value = 'A'
+                    # Also add the attendance status to the remark column
+                    marks_data.setdefault(student_id, {}).setdefault(subject_id, {})['remark'] = 'Absent'
+                elif attendance_status == 'Excused':
+                    display_value = 'Excused'
+                    marks_data.setdefault(student_id, {}).setdefault(subject_id, {})['remark'] = 'Excused'
+            
+            # Store marks data
+            marks_data.setdefault(student_id, {}).setdefault(subject_id, {})['marks'] = display_value
+
+        # Store remarks data (remarks from the `StudentSubjectRemark` model)
+        for r in remarks_qs:
+            student_id = str(r.student_id)
+            subject_id = str(r.subject_id)
+            marks_data.setdefault(student_id, {}).setdefault(subject_id, {})['remark'] = r.remark
+
+        # Ensure absentees without mark entries are marked in marks_data
+        for student in students:
+            for subject in subjects:
+                exam_date = subject_exam_dates.get(subject.id)
+                if exam_date:
+                    attendance_status = attendance_lookup.get((student.id, exam_date))
+                    if attendance_status == 'Absent':
+                        student_id = str(student.id)
+                        subject_id = str(subject.id)
+                        # If no marks entry, we still show as "Absent"
+                        if student_id not in marks_data or subject_id not in marks_data[student_id]:
+                            marks_data.setdefault(student_id, {}).setdefault(subject_id, {})['marks'] = 'A'
+                        marks_data[student_id][subject_id]['remark'] = 'Absent'
+                    elif attendance_status == 'Excused':
+                        student_id = str(student.id)
+                        subject_id = str(subject.id)
+                        # If no marks entry, we still show as "Excused"
+                        if student_id not in marks_data or subject_id not in marks_data[student_id]:
+                            marks_data.setdefault(student_id, {}).setdefault(subject_id, {})['marks'] = 'Excused'
+                        marks_data[student_id][subject_id]['remark'] = 'Excused'
+
+    # Prepare the context for rendering
     context = {
         'classes': classes,
         'exams': exams,
@@ -2111,8 +2195,9 @@ def teacher_dashboard(request):
         'subjects': subjects,
         'selected_class_id': class_id,
         'selected_exam_id': exam_id,
-        'marks_data': json.dumps(marks_data),  # Sending data as JSON
+        'marks_data': json.dumps(marks_data),
     }
+
     return render(request, 'school_management/teacher_dashboard.html', context)
 
 # Assuming that marks and remarks data are sent as JSON in the request body
@@ -2381,62 +2466,90 @@ from django.http import JsonResponse
 from django.utils.dateparse import parse_date
 import json
 from .models import Exam, ExamSchedule, Subject, Class
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.dateparse import parse_date
+import json
+from .models import Exam, ExamSchedule
 
+
+@csrf_exempt
 def create_exam(request):
     """
     Create or update an exam schedule.
-    For each cell (defined by exam, school_class, and subject),
-    any existing schedule is deleted before saving the new one.
+    Returns error messages with reasons if any row fails.
     """
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            exam_id = data.get("exam_id")
-            exam_name = data.get("name", "").strip()
-            schedule = data.get("schedule", [])
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid request"}, status=400)
 
-            if not schedule:
-                return JsonResponse({"error": "At least one subject schedule is required!"}, status=400)
+    try:
+        data = json.loads(request.body)
+        exam_id = data.get("exam_id")
+        exam_name = data.get("name", "").strip()
+        schedule = data.get("schedule", [])
 
-            # If updating an existing exam, fetch it; otherwise, create a new exam.
-            if exam_id:
+        if not schedule:
+            return JsonResponse({"error": "At least one subject schedule is required!"}, status=400)
+
+        # Get or create exam
+        if exam_id:
+            try:
                 exam = Exam.objects.get(id=exam_id)
-            else:
-                if not exam_name:
-                    return JsonResponse({"error": "Exam name is required!"}, status=400)
-                exam, created = Exam.objects.get_or_create(name=exam_name)
+            except Exam.DoesNotExist:
+                return JsonResponse({"error": "Selected exam does not exist!"}, status=404)
+        else:
+            if not exam_name:
+                return JsonResponse({"error": "Exam name is required!"}, status=400)
+            exam, _ = Exam.objects.get_or_create(name=exam_name)
 
-            # Loop through each schedule entry and remove any old data then create new.
-            for entry in schedule:
-                class_id = entry["class_id"]
-                subject_id = entry["subject_id"]
-                date = parse_date(entry["date"])
-                total_marks = int(entry["total_marks"])
+        errors = []
 
-                # Delete any existing schedule for this exam, class, and subject.
-                ExamSchedule.objects.filter(
-                    exam=exam,
-                    school_class_id=class_id,
-                    subject_id=subject_id
-                ).delete()
+        for index, entry in enumerate(schedule):
+            class_id = entry.get("class_id")
+            subject_id = entry.get("subject_id")
+            raw_date = entry.get("date")
+            raw_marks = entry.get("total_marks")
 
-                # Create new schedule for this cell.
-                ExamSchedule.objects.create(
-                    exam=exam,
-                    school_class_id=class_id,
-                    subject_id=subject_id,
-                    date=date,
-                    total_marks=total_marks
-                )
+            row_id = f"[Class ID: {class_id}, Subject ID: {subject_id}]"
 
-            return JsonResponse({"message": f"Exam '{exam.name}' saved successfully!"})
-        except Exam.DoesNotExist:
-            return JsonResponse({"error": "Selected exam does not exist!"}, status=404)
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=400)
+            # Validate date
+            date = parse_date(raw_date) if raw_date else None
+            if not date:
+                errors.append(f"{row_id} ➜ Invalid or missing exam date.")
+                continue
 
-    return JsonResponse({"error": "Invalid request"}, status=400)
+            # Validate marks
+            try:
+                total_marks = int(raw_marks)
+            except (ValueError, TypeError):
+                errors.append(f"{row_id} ➜ Total marks missing or not a valid number.")
+                continue
 
+            # Delete and recreate schedule
+            ExamSchedule.objects.filter(
+                exam=exam,
+                school_class_id=class_id,
+                subject_id=subject_id
+            ).delete()
+
+            ExamSchedule.objects.create(
+                exam=exam,
+                school_class_id=class_id,
+                subject_id=subject_id,
+                date=date,
+                total_marks=total_marks
+            )
+
+        if errors:
+            return JsonResponse({
+                "error": "Some schedule entries could not be saved.",
+                "details": errors
+            }, status=400)
+
+        return JsonResponse({"message": f"Exam '{exam.name}' saved successfully!"})
+
+    except Exception as e:
+        return JsonResponse({"error": "An error occurred.", "details": str(e)}, status=500)
 
 @csrf_exempt
 def delete_exam(request, exam_id):
@@ -2834,37 +2947,39 @@ from django.shortcuts import render
 from .models import Class, Student, StudentAttendance
 from django.utils.timezone import now
 def attendance_view(request):
-    """
-    View to display the attendance page where the user can select a class from a dropdown.
-    Displays a list of students in the selected class and their current attendance status.
-    """
     date = now().date()
-    selected_class_id = request.GET.get('class_id', None)
+    selected_class_id = request.GET.get('class_id')
     classes = Class.objects.all()
     students = []
-    attendance_status = {}  # Use a dictionary with student.id as the key
     selected_class_name = None
 
     if selected_class_id:
-        school_class = Class.objects.get(id=selected_class_id)
-        students = Student.objects.filter(assigned_class=school_class)
-        attendance_records = StudentAttendance.objects.filter(school_class=school_class, date=date)
-        
-        # Create a dictionary with student.id as key and status as value
-        for record in attendance_records:
-            attendance_status[record.student.id] = record.status
-        selected_class_name = school_class.name
+        try:
+            school_class = Class.objects.get(id=selected_class_id)
+            students = list(Student.objects.filter(assigned_class=school_class).order_by('roll_number'))
+            attendance_records = StudentAttendance.objects.filter(school_class=school_class, date=date)
+            
+            # Create a mapping of student ID to attendance status
+            attendance_status_map = {
+                record.student.id: record.status for record in attendance_records
+            }
+
+            # Assign the attendance status to each student
+            for student in students:
+                student.attendance_status = attendance_status_map.get(student.id, '')  # Empty if not marked
+
+            selected_class_name = school_class.name
+        except Class.DoesNotExist:
+            messages.error(request, "Class not found.")
+            return redirect('attendance_view')
 
     return render(request, 'school_management/students_attendance.html', {
         'classes': classes,
         'selected_class_id': selected_class_id,
         'selected_class_name': selected_class_name,
         'students': students,
-        'attendance_status': attendance_status,
         'date': date,
     })
-
-
 def save_attendance(request):
     if request.method == 'POST':
         selected_class_id = request.POST.get('class_id')
@@ -2893,6 +3008,8 @@ def save_attendance(request):
             messages.error(request, f"Failed to save attendance: {str(e)}")
 
         return redirect('attendance_view')
+
+
 from django.shortcuts import render
 from .models import Class, Student
 from datetime import datetime
@@ -2989,86 +3106,131 @@ def student_assessment_report(request):
 
     return render(request, 'school_management/student_assessment_ui.html', context)
 
+from django.shortcuts import get_object_or_404, render
+from .models import Student, StudentAttendance, Exam, Marks, ExamSchedule, StudentSubjectRemark
+from django.db.models import Count
+from django.shortcuts import render, get_object_or_404
+from .models import Student, StudentAttendance, Exam, Marks, ExamSchedule, StudentSubjectRemark
+from django.db.models import Count
+from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, render
+from django.db.models import Count
+from datetime import date
+from django.shortcuts import render, get_object_or_404
+from django.db.models import Count, Q
+from .models import Student, StudentAttendance, Exam, Marks, ExamSchedule, StudentSubjectRemark
+
+from django.shortcuts import render, get_object_or_404
+from django.db.models import Count, Q
+from .models import Student, StudentAttendance, Exam, Marks, ExamSchedule, StudentSubjectRemark
+
+from django.shortcuts import render, get_object_or_404
+from django.db.models import Count, Q
+from .models import Student, StudentAttendance, Marks, Exam, ExamSchedule, StudentSubjectRemark, AcademicYear
+from django.shortcuts import render, get_object_or_404
+from django.db.models import Count, Q
+from datetime import date
+from .models import (
+    Student, StudentAttendance, Exam, Marks,
+    ExamSchedule, StudentSubjectRemark, AcademicYear
+)
+
 def student_detail(request, student_id):
-    # Fetch student and parent details
-    student = get_object_or_404(Student, id=student_id)
+    # Fetch student with related parent, class, and academic year
+    student = get_object_or_404(
+        Student.objects.select_related('parent', 'assigned_class', 'academic_year'),
+        id=student_id
+    )
+    
     parent = student.parent
     class_name = student.assigned_class.name
+    academic_year = student.academic_year
 
-    # Attendance records
-    attendance_records = StudentAttendance.objects.filter(student=student).order_by('-date')
+    # === Attendance Statistics ===
+    attendance_stats = StudentAttendance.objects.filter(student=student).aggregate(
+        total_present=Count('status', filter=Q(status='Present')),
+        total_absent=Count('status', filter=Q(status='Absent')),
+        total_late=Count('status', filter=Q(status='Late')),
+        total_excused=Count('status', filter=Q(status='Excused'))
+    )
 
-    # All exams
-    exams = Exam.objects.all()
+    total_present = attendance_stats.get('total_present') or 0
+    total_absent = attendance_stats.get('total_absent') or 0
+    total_late = attendance_stats.get('total_late') or 0
+    total_excused = attendance_stats.get('total_excused') or 0
 
-    # GET filters
-    selected_exam_type = request.GET.get('exam_type')
+    total_working_days = academic_year.working_days_upto_today()
+    attendance_percentage = round((total_present / total_working_days) * 100, 2) if total_working_days else 0
+
+    # === Exam Selection ===
     selected_exam_id = request.GET.get('exam')
+    exams = Exam.objects.all().order_by('-id')  # For exam dropdown
 
-    # Filter exams if exam_type selected
-    if selected_exam_type:
-        exams = exams.filter(name=selected_exam_type)
-
-    # Filter marks
-    marks_records = Marks.objects.filter(student=student)
+    # === Marks and Exam Schedules ===
+    marks_records = Marks.objects.filter(student=student).select_related('subject')
     if selected_exam_id:
         marks_records = marks_records.filter(exam_id=selected_exam_id)
 
-    # Get all exam schedules for the student's class
-    exam_schedules = ExamSchedule.objects.filter(school_class=student.assigned_class, exam_id=selected_exam_id) if selected_exam_id else []
+    exam_schedules = ExamSchedule.objects.filter(
+        school_class=student.assigned_class,
+        exam_id=selected_exam_id
+    ) if selected_exam_id else []
 
-    # Get remarks for the selected exam and student
-    remarks_data = {}
+    schedule_dict = {s.subject.id: s for s in exam_schedules}
+    
+    remarks = StudentSubjectRemark.objects.filter(student=student)
     if selected_exam_id:
-        remarks_records = StudentSubjectRemark.objects.filter(student=student, exam_id=selected_exam_id)
-        for remark in remarks_records:
-            remarks_data[remark.subject.id] = remark.remark
+        remarks = remarks.filter(exam_id=selected_exam_id)
+    remark_dict = {r.subject.id: r.remark for r in remarks}
 
-    # Prepare marks data, including the subject object itself and remarks
+    # === Prepare Marks Data ===
     marks_data = {}
+    total_marks_obtained = 0
+    total_max_marks = 0
+
     for mark in marks_records:
-        if mark.subject.id not in marks_data:
-            marks_data[mark.subject.id] = {'subject': mark.subject, 'marks_obtained': mark.marks_obtained, 'total_marks': 0, 'percentage': 0, 'remark': remarks_data.get(mark.subject.id, '')}
-        
-        # Find the corresponding exam schedule for this mark's subject
-        schedule = next(
-            (s for s in exam_schedules if s.subject.id == mark.subject.id), 
-            None
-        )
-        
-        if schedule:
-            marks_data[mark.subject.id]['total_marks'] = schedule.total_marks
-            # Calculate percentage
-            if schedule.total_marks > 0:
-                marks_data[mark.subject.id]['percentage'] = round((mark.marks_obtained / schedule.total_marks) * 100, 2)
+        subject_id = mark.subject.id
+        schedule = schedule_dict.get(subject_id)
+        total_marks = schedule.total_marks if schedule else 0
+        obtained = mark.marks_obtained
+        percentage = round((obtained / total_marks) * 100, 2) if total_marks > 0 else 0
 
-    # Calculate total marks and percentage for the student
-    total_marks_obtained = sum(data['marks_obtained'] for data in marks_data.values())
-    total_max_marks = sum(data['total_marks'] for data in marks_data.values())
-    percentage = round((total_marks_obtained / total_max_marks) * 100, 2) if total_max_marks > 0 else 0
+        marks_data[subject_id] = {
+            'subject': mark.subject,
+            'marks_obtained': obtained,
+            'total_marks': total_marks,
+            'percentage': percentage,
+            'remark': remark_dict.get(subject_id, 'No remark available')
+        }
 
-    # Distinct exam types
-    exam_types = exams.values('name').distinct()
+        total_marks_obtained += obtained
+        total_max_marks += total_marks
 
+    overall_percentage = round((total_marks_obtained / total_max_marks) * 100, 2) if total_max_marks > 0 else 0
+
+    # === Context for Template ===
     context = {
         'student': student,
         'parent': parent,
         'class_name': class_name,
-        'attendance_records': attendance_records,
-        'exam_types': exam_types,
+        'attendance_counts': {
+            'Present': total_present,
+            'Absent': total_absent,
+            'Late': total_late,
+            'Excused': total_excused,
+        },
+        'attendance_percentage': attendance_percentage,
+        'total_working_days': total_working_days,
         'exams': exams,
-        'marks_records': marks_records,
-        'selected_exam_type': selected_exam_type,
         'selected_exam_id': selected_exam_id,
+        'marks_data': marks_data,
         'exam_schedules': exam_schedules,
-        'marks_data': marks_data,  # Structured marks data with subject details and remarks
         'total_marks_obtained': total_marks_obtained,
         'total_max_marks': total_max_marks,
-        'percentage': percentage,
+        'percentage': overall_percentage,
     }
 
     return render(request, 'school_management/student_detail.html', context)
-
 
 from django.shortcuts import render, get_object_or_404
 from .models import Student, Exam, InternalAssessment, StudentSubjectRemark

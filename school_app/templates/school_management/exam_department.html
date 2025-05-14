@@ -1,38 +1,155 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Exam Department</title>
 
   <!-- Include jQuery & Flatpickr -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"/>
 
   <style>
-    body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
-    .navbar { background-color: #333; padding: 15px; text-align: center; }
-    .navbar a { color: white; text-decoration: none; padding: 14px 20px; display: inline-block; }
-    .navbar a:hover { background-color: #575757; }
-    .container { width: 90%; margin: 20px auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
-    th { background-color: #333; color: #fff; }
-    input { width: 120px; padding: 5px; text-align: center; }
-    button { margin-top: 10px; padding: 10px 20px; background-color: #28a745; color: white; border: none; cursor: pointer; border-radius: 5px; }
-    button:hover { background-color: #218838; }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding-top: 60px; /* space for fixed navbar */
+    }
+
+    /* Fixed Navbar */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background-color: #333;
+      padding: 15px 10px;
+      text-align: center;
+      z-index: 1000;
+    }
+
+    .navbar a {
+      color: white;
+      text-decoration: none;
+      padding: 10px 15px;
+      display: inline-block;
+      font-size: 16px;
+    }
+
+    .navbar a:hover {
+      background-color: #575757;
+    }
+
+    .container {
+      width: 95%;
+      max-width: 1200px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      overflow-x: auto;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+      vertical-align: top;
+    }
+
+    th {
+      background-color: #333;
+      color: #fff;
+    }
+
+    input {
+      padding: 5px;
+      text-align: center;
+    }
+
+    .date-picker, .marks-input {
+      width: 90px;
+      margin-bottom: 5px;
+    }
+
+    .fill-date-input {
+      width: 85px;
+      margin-top: 5px;
+    }
+
+    .fill-date-btn {
+      font-size: 11px;
+      padding: 3px 5px;
+      margin-top: 4px;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+
+    button:hover {
+      background-color: #218838;
+    }
+
+    .copied-flash {
+      background-color: #d1ffd1 !important;
+      transition: background-color 0.3s ease;
+    }
+
+    @media (max-width: 768px) {
+      .navbar a {
+        display: block;
+        padding: 10px;
+      }
+
+      th, td {
+        font-size: 12px;
+        padding: 6px;
+      }
+
+      input.date-picker, input.marks-input, input.fill-date-input {
+        width: 70px;
+      }
+
+      .fill-date-btn {
+        padding: 2px 4px;
+        font-size: 10px;
+      }
+
+      button {
+        width: 100%;
+        margin-top: 10px;
+      }
+
+      table {
+        display: block;
+        overflow-x: auto;
+      }
+    }
   </style>
 </head>
 <body>
 
-  <!-- Navigation Panel -->
+  <!-- Fixed Navigation Panel -->
   <div class="navbar">
     <a href="{% url 'exam_department' %}">Exam Department</a>
     <a href="{% url 'internal_assessment_view' %}">Internal Assessment Entry</a>
-    <!-- <a href="{% url 'teacher_timetable_pg' %}">Teacher Timetable</a> -->
-    <!-- <a href="{% url 'student_enrollment' %}">Student Enrollment</a> -->
-    <!-- <a href="{% url 'internal_assessment_view' %}">Internal Assessment</a>  -->
+    <a href="{% url 'principal_dashboard' %}">Principal Dashboard</a>
   </div>
 
   <div class="container">
@@ -57,7 +174,12 @@
         <tr>
           <th>Class / Subject</th>
           {% for subject in subjects %}
-            <th>{{ subject.name }}</th>
+            <th>
+              {{ subject.name }}<br>
+              <input type="text" class="fill-date-input" data-subject-id="{{ subject.id }}" placeholder="dd/mm/yyyy">
+              <br>
+              <button class="fill-date-btn" data-subject-id="{{ subject.id }}">Fill</button>
+            </th>
           {% endfor %}
         </tr>
       </thead>
@@ -73,9 +195,8 @@
             {% for subject in subjects %}
               <td>
                 {% if school_class.assigned_subjects and subject.id in school_class.assigned_subjects %}
-                  <!-- Date Picker Input -->
                   <input type="text" class="date-picker" data-class-id="{{ school_class.id }}" data-subject-id="{{ subject.id }}" placeholder="Select Date">
-                  <!-- Marks Input: iterate over total_marks_list to find value -->
+                  <br>
                   <input type="number" class="marks-input" data-class-id="{{ school_class.id }}" data-subject-id="{{ subject.id }}" placeholder="Marks" min="0"
                          value="{% for pair in total_marks_list %}{% if pair.0 == subject.id %}{{ pair.1 }}{% endif %}{% endfor %}">
                 {% else %}
@@ -94,83 +215,109 @@
   </div>
 
   <script>
-    $(document).ready(function() {
-      $(".date-picker").flatpickr({ dateFormat: "d/m/Y" });
-    });
+    $(document).ready(function () {
+      $(".date-picker").flatpickr({ dateFormat: "d/m/Y", allowInput: true });
+      $(".fill-date-input").flatpickr({ dateFormat: "d/m/Y", allowInput: true });
 
-    // Disable new exam name input when an existing exam is selected
-    $("#exam-select").change(function () {
-      let examId = $(this).val();
-      if (examId) {
-        $("#new-exam-name").prop("disabled", true).val("");
-        loadExamSchedule(examId);
-      } else {
-        $("#new-exam-name").prop("disabled", false);
+      $(".fill-date-btn").click(function () {
+        const subjectId = $(this).data("subject-id");
+        const dateValue = $(`.fill-date-input[data-subject-id='${subjectId}']`).val().trim();
+        if (!dateValue) {
+          alert("Please enter a valid date (dd/mm/yyyy).");
+          return;
+        }
+        $(`.date-picker[data-subject-id='${subjectId}']`).each(function () {
+          $(this).val(dateValue).addClass("copied-flash");
+          setTimeout(() => $(this).removeClass("copied-flash"), 300);
+        });
+      });
+
+      $(document).on("copy paste", ".date-picker, .marks-input", function (e) {
+        if (e.type === "paste") {
+          $(this).addClass("copied-flash");
+          setTimeout(() => $(this).removeClass("copied-flash"), 300);
+        }
+      });
+
+      $("#exam-select").change(function () {
+        let examId = $(this).val();
+        if (examId) {
+          $("#new-exam-name").prop("disabled", true).val("");
+          loadExamSchedule(examId);
+        } else {
+          $("#new-exam-name").prop("disabled", false);
+        }
+      });
+
+      function loadExamSchedule(examId) {
+        if (!examId) return;
+        fetch(`/get_exam_schedule/${examId}/`)
+          .then(response => response.json())
+          .then(data => {
+            $(".date-picker").val("");
+            $(".marks-input").val("");
+            data.forEach(entry => {
+              let dateInput = $(`.date-picker[data-class-id='${entry.class_id}'][data-subject-id='${entry.subject_id}']`);
+              let marksInput = $(`.marks-input[data-class-id='${entry.class_id}'][data-subject-id='${entry.subject_id}']`);
+              if (dateInput.length) {
+                let formattedDate = new Date(entry.date).toLocaleDateString("en-GB");
+                dateInput.val(formattedDate);
+              }
+              if (marksInput.length) {
+                marksInput.val(entry.total_marks);
+              }
+            });
+          })
+          .catch(error => console.error("Error loading schedule:", error));
       }
-    });
 
-    // Load Exam Schedule when an existing exam is selected
-    function loadExamSchedule(examId) {
-      if (!examId) return;
-      fetch(`/get_exam_schedule/${examId}/`)
+      $("#save-exam").click(function () {
+        let selectedExamId = $("#exam-select").val();
+        let newExamName = $("#new-exam-name").val().trim();
+        if (!selectedExamId && !newExamName) {
+          alert("Please select an existing exam or enter a new exam name!");
+          return;
+        }
+
+        let examData = [];
+        $(".date-picker").each(function () {
+          let date = $(this).val();
+          let classId = $(this).data("class-id");
+          let subjectId = $(this).data("subject-id");
+          let marks = $(`.marks-input[data-class-id='${classId}'][data-subject-id='${subjectId}']`).val();
+          if (date && marks) {
+            let parts = date.split("/");
+            let formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+            examData.push({ class_id: classId, subject_id: subjectId, date: formattedDate, total_marks: marks });
+          }
+        });
+
+        fetch("{% url 'create_exam' %}", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token }}"
+          },
+          body: JSON.stringify({
+            exam_id: selectedExamId,
+            name: newExamName,
+            schedule: examData
+          })
+        })
         .then(response => response.json())
         .then(data => {
-          $(".date-picker").val(""); // Clear previous selections
-          $(".marks-input").val(""); // Clear previous marks
-          data.forEach(entry => {
-            let dateInput = $(`.date-picker[data-class-id='${entry.class_id}'][data-subject-id='${entry.subject_id}']`);
-            let marksInput = $(`.marks-input[data-class-id='${entry.class_id}'][data-subject-id='${entry.subject_id}']`);
-            if (dateInput.length) {
-              let formattedDate = new Date(entry.date).toLocaleDateString("en-GB");
-              dateInput.val(formattedDate);
-            }
-            if (marksInput.length) {
-              marksInput.val(entry.total_marks);
-            }
-          });
-        })
-        .catch(error => console.error("Error loading exam schedule:", error));
-    }
-
-    // Save or Update Exam Schedule
-    $("#save-exam").click(function(){
-      let selectedExamId = $("#exam-select").val();
-      let newExamName = $("#new-exam-name").val().trim();
-      if (!selectedExamId && !newExamName) {
-        alert("Please select an existing exam or enter a new exam name!");
-        return;
-      }
-      let examData = [];
-      $(".date-picker").each(function(){
-        let date = $(this).val();
-        let classId = $(this).data("class-id");
-        let subjectId = $(this).data("subject-id");
-        let marks = $(`.marks-input[data-class-id='${classId}'][data-subject-id='${subjectId}']`).val();
-        if (date && marks) {
-          let parts = date.split("/");
-          let formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
-          examData.push({ class_id: classId, subject_id: subjectId, date: formattedDate, total_marks: marks });
-        }
+          if (data.message) {
+            alert(data.message);
+            location.reload();
+          } else {
+            alert("Error: " + data.error);
+          }
+        });
       });
-      fetch("{% url 'create_exam' %}", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-CSRFToken": "{{ csrf_token }}" },
-        body: JSON.stringify({ exam_id: selectedExamId, name: newExamName, schedule: examData })
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.message) {
-          alert(data.message);
-          location.reload();
-        } else {
-          alert("Error: " + data.error);
-        }
-      });
-    });
 
-    // Export Exam Schedule to Excel
-    $("#export-excel").click(function(){
-      window.location.href = "{% url 'export_exam_schedule' %}";
+      $("#export-excel").click(function () {
+        window.location.href = "{% url 'export_exam_schedule' %}";
+      });
     });
   </script>
 

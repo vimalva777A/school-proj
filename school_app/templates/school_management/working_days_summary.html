@@ -13,9 +13,9 @@
             <div class="col-md-6">
                 <div class="card border-primary">
                     <div class="card-body">
-                        <h5 class="card-title">Academic Year</h5>
-                        <p class="card-text"><strong>Start:</strong> {{ year.start_date }}</p>
-                        <p class="card-text"><strong>End:</strong> {{ year.end_date }}</p>
+                        <h5 class="card-title">Academic Year : {{ academic_year.name }}</h5>
+                        <p class="card-text"><strong>Start:</strong>  {{ academic_year.start_date }}</p>
+                        <p class="card-text"><strong>End:</strong> {{ academic_year.end_date }}</p>
                     </div>
                 </div>
             </div>
@@ -55,10 +55,10 @@
         {% endif %}
 
         <div class="mt-4">
-            {% if year.id %}
-                <a href="{% url 'academicyear_change' year.id %}" class="btn btn-primary">
-                    Edit Academic Year
-                </a>
+            {% if academic_year.id %}
+            <a href="{% url 'academicyear_change' academic_year.id %}" class="btn btn-primary">
+                Edit Academic Year
+            </a>
             {% endif %}
             <a href="{% url 'holiday_add' %}" class="btn btn-success">
                 Add New Holiday

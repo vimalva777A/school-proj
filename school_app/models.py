@@ -8,6 +8,21 @@ from django.db import models
 from django.utils import timezone
 from datetime import timedelta, date
 
+from datetime import date, timedelta
+from django.db import models
+
+from datetime import date, timedelta
+from django.db import models
+
+from datetime import timedelta, date
+from django.db import models
+from datetime import timedelta, date
+from django.db import models
+
+from datetime import date, timedelta
+
+from django.db import models
+from datetime import timedelta, date
 
 class AcademicYear(models.Model):
     name = models.CharField(max_length=50, help_text="e.g., 2024-2025")
@@ -18,14 +33,11 @@ class AcademicYear(models.Model):
         return self.name
 
     def total_days(self):
+        """Returns the total number of calendar days in the academic year."""
         return (self.end_date - self.start_date).days + 1
 
-    def working_days(self):
-        all_days = set(self.get_all_dates())
-        holidays = set(self.holiday_set.values_list('date', flat=True))
-        return len(all_days - holidays)
-
     def get_all_dates(self):
+        """Generates a list of all dates from start_date to end_date."""
         current = self.start_date
         dates = []
         while current <= self.end_date:
@@ -33,6 +45,52 @@ class AcademicYear(models.Model):
             current += timedelta(days=1)
         return dates
 
+    def working_days(self, exclude_weekends=True):
+        """
+        Returns total working days in the academic year, excluding holidays.
+        Weekends are excluded unless `exclude_weekends=False`.
+        """
+        holidays = set(self.holiday_set.values_list('date', flat=True))
+        working_days_count = 0
+        current = self.start_date
+
+        while current <= self.end_date:
+            if exclude_weekends and current.weekday() >= 5:
+                current += timedelta(days=1)
+                continue
+            if current not in holidays:
+                working_days_count += 1
+            current += timedelta(days=1)
+
+        return working_days_count
+
+    def working_days_upto_today(self, exclude_weekends=True):
+        """
+        Returns working days from start_date up to today, excluding holidays.
+        """
+        today = date.today()
+        if today < self.start_date:
+            return 0
+        if today > self.end_date:
+            today = self.end_date
+
+        holidays = set(self.holiday_set.filter(date__lte=today).values_list('date', flat=True))
+        working_days_count = 0
+        current = self.start_date
+
+        while current <= today:
+            if exclude_weekends and current.weekday() >= 5:
+                current += timedelta(days=1)
+                continue
+            if current not in holidays:
+                working_days_count += 1
+            current += timedelta(days=1)
+
+        return working_days_count
+
+    def __contains__(self, check_date):
+        """Allows usage like `if some_date in academic_year:`"""
+        return self.start_date <= check_date <= self.end_date
 
 class Holiday(models.Model):
     academic_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE)
@@ -41,6 +99,9 @@ class Holiday(models.Model):
 
     class Meta:
         unique_together = ('academic_year', 'date')
+        verbose_name = "Holiday"
+        verbose_name_plural = "Holidays"
+        ordering = ['date']
 
     def __str__(self):
         return f"{self.date} - {self.reason}"
@@ -274,7 +335,7 @@ class Student(models.Model):
     roll_number = models.CharField(max_length=20, blank=True, null=True, unique=True)
     role = models.CharField(max_length=50, blank=True, null=True)
     category = models.CharField(max_length=10, choices=CATEGORY_CHOICES, default="General")
-
+    academic_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE ,null=True, blank=True)
     def save(self, *args, **kwargs):
         if not self.roll_number:  # Generate only if roll number is empty
             last_student = Student.objects.filter(assigned_class=self.assigned_class).order_by('-id').first()
@@ -377,8 +438,7 @@ class StudentAttendance(models.Model):
     def __str__(self):
             return f"{self.student.name} - {self.date} - {self.status}"
     
-from django.db import models
-from django.db import models
+
 
 MEDIA_TYPE_CHOICES = (
     ('image', 'Image'),

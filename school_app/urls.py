@@ -80,7 +80,7 @@ urlpatterns=[
     path('media/delete/<int:media_id>/', views.delete_media, name='delete_media'),  # Delete media URL
 
     # Pages urls are in down
-    path('', views.index_view, name='index'),
+    path('index_view', views.index_view, name='index'),
     path('media_upload', views.media_upload, name='media_upload'),
     path('media_gallery', views.media_gallery, name='media_gallery'),
     path("class_creation_pg", views.class_creation_pg, name="class_creation_pg"),
@@ -91,7 +91,7 @@ urlpatterns=[
 
     path('subsubject_management_pg', views.subsubject_management_pg, name='subsubject_management_pg'),
     path('internal_assessment_view', views.internal_assessment_view, name='internal_assessment_view'),
-    path('teacher_dashboard', views.teacher_dashboard, name='teacher_dashboard'),
+    path('', views.teacher_dashboard, name='teacher_dashboard'),
     path('assessment_table', views.assessment_table, name='assessment_table'),
 
     path('principal_dashboard', views.principal_dashboard, name='principal_dashboard'),

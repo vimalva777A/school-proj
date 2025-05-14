@@ -293,30 +293,24 @@
                     <tbody>
                         {% for student in students %}
                             <tr>
-                                <td>{{ student.roll_number }}</td>
+                                <td>{{ student.roll_number }}</td> <!-- Display roll number here -->
                                 <td>{{ student.name }}</td>
                                 <td>
-                                    <div class="radio-group">
-                                        <label>
-                                            <input type="radio" name="status_{{ student.id }}" value="Present"
-                                                {% if attendance_status.student.id == "Present" %}checked{% endif %} required> Present
-                                        </label>
-                                        <label>
-                                            <input type="radio" name="status_{{ student.id }}" value="Absent"
-                                                {% if attendance_status.student.id == "Absent" %}checked{% endif %} required> Absent
-                                        </label>
-                                        <label>
-                                            <input type="radio" name="status_{{ student.id }}" value="Late"
-                                                {% if attendance_status.student.id == "Late" %}checked{% endif %} required> Late
-                                        </label>
-                                        <label>
-                                            <input type="radio" name="status_{{ student.id }}" value="Excused"
-                                                {% if attendance_status.student.id == "Excused" %}checked{% endif %} required> Excused
-                                        </label>
-                                    </div>
+                                    <input type="radio" name="status_{{ student.id }}" value="Present"
+                                        {% if student.attendance_status == "Present" %}checked{% endif %} required> Present
+
+                                    <input type="radio" name="status_{{ student.id }}" value="Absent"
+                                        {% if student.attendance_status == "Absent" %}checked{% endif %}> Absent
+
+                                    <input type="radio" name="status_{{ student.id }}" value="Late"
+                                        {% if student.attendance_status == "Late" %}checked{% endif %}> Late
+
+                                    <input type="radio" name="status_{{ student.id }}" value="Excused"
+                                        {% if student.attendance_status == "Excused" %}checked{% endif %}> Excused
                                 </td>
                             </tr>
                         {% endfor %}
+
                     </tbody>
                 </table>
 

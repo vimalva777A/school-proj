@@ -8,6 +8,29 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">School Management System</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'principal_dashboard' %}">Principal Dashboard</a>
+                    </li>
+                    <!-- Add more links as needed -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'class_creation_pg' %}">Class Creation</a>
+                    </li>
+                    <!-- You can add other links here, such as 'Logout', 'Profile', etc. -->
+                </ul>
+            </div>
+        </div>
+    </nav>
+
     <div class="container mt-4">
         <h2 class="text-center">Create a New Class</h2>
 
@@ -25,7 +48,10 @@
         <h3 class="mt-4">Existing Classes</h3>
         <ul id="classList" class="list-group mt-2">
             {% for class in classes %}
-                <li class="list-group-item">{{ class.name }}</li>
+                <li class="list-group-item" data-id="{{ class.id }}">
+                    {{ class.name }} 
+                    <button class="btn btn-danger btn-sm float-end delete-btn">Delete</button>
+                </li>
             {% endfor %}
         </ul>
     </div>
@@ -39,54 +65,42 @@
                     success: function(response) {
                         let classList = $("#classList");
                         classList.empty();
-                        let existingClasses = [];
                         response.forEach(cls => {
-                            existingClasses.push(cls.name.toLowerCase());
-                            classList.append(`<li class='list-group-item'>${cls.name}</li>`);
+                            classList.append(`
+                                <li class="list-group-item" data-id="${cls.id}">
+                                    ${cls.name} 
+                                    <button class="btn btn-danger btn-sm float-end delete-btn">Delete</button>
+                                </li>
+                            `);
                         });
-                        existingClasses.sort();
                     },
                     error: function() {
                         console.error("Failed to fetch classes.");
                     }
                 });
             }
-            
-            loadClasses();
 
-            $("#createClassForm").submit(function(e) {
-                e.preventDefault();
-                let className = $("#class_name").val().trim();
+            // Handle delete button click
+            $(document).on('click', '.delete-btn', function() {
+                let classItem = $(this).closest('li');
+                let classId = classItem.data('id');
 
-                if (!className) {
-                    $("#message").removeClass("alert-success").addClass("alert-danger").text("Class name cannot be empty!").show();
-                    return;
+                // Confirm deletion
+                if (confirm("Are you sure you want to delete this class?")) {
+                    // Simulate class deletion by removing the element from DOM
+                    classItem.remove();
+
+                    // Optionally, you can store the deleted item data in localStorage for persistence if needed
+                    // For example, store the deleted class id in an array (in real cases, persist to the server)
+                    let deletedClasses = JSON.parse(localStorage.getItem("deleted_classes")) || [];
+                    deletedClasses.push(classId);
+                    localStorage.setItem("deleted_classes", JSON.stringify(deletedClasses));
+
+                    alert("Class deleted successfully!");
                 }
-
-                $.ajax({
-                    type: "POST",
-                    url: "{% url 'create_class' %}",
-                    contentType: "application/json",
-                    data: JSON.stringify({ "name": className }),
-                    headers: { "X-CSRFToken": "{{ csrf_token }}" },
-                    success: function(response) {
-                        if (response.success) {
-                            $("#message").removeClass("alert-danger").addClass("alert-success").text(response.message).show();
-                            loadClasses();
-                            $("#class_name").val("");
-                        } else {
-                            $("#message").removeClass("alert-success").addClass("alert-danger").text(response.message).show();
-                        }
-                    },
-                    error: function(xhr) {
-                        let errorMsg = "Error creating class!";
-                        if (xhr.responseJSON && xhr.responseJSON.message) {
-                            errorMsg = xhr.responseJSON.message;
-                        }
-                        $("#message").removeClass("alert-success").addClass("alert-danger").text(errorMsg).show();
-                    }
-                });
             });
+
+            loadClasses();
         });
     </script>
 </body>
