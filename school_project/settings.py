@@ -112,7 +112,7 @@ DATABASES = {
         'NAME': os.getenv('DB_NAME', 'school_db_xgmw'),
         'USER': os.getenv('DB_USER', 'school_db_xgmw_user'),
         'PASSWORD': os.getenv('DB_PASSWORD', '7f8AA0UYhKMgq0al3BMLC1RNaNhAwDMr'),
-        'HOST': os.getenv('DB_HOST', 'dpg-d0asqt2dbo4c73c6gapg-a.pg.render.com'),  # full hostname here
+        'HOST': os.getenv('DB_HOST', 'dpg-d0asqt2dbo4c73c6gapg-a'),  # full hostname here
         'PORT': os.getenv('DB_PORT', '5432'),
         'OPTIONS': {
             'sslmode': 'require',
