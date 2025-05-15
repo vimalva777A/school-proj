@@ -9,3 +9,4 @@ class Command(BaseCommand):
         call_command("makemigrations", interactive=False)
         call_command("migrate", interactive=False)
         self.stdout.write(self.style.SUCCESS("Migrations applied successfully."))
+
