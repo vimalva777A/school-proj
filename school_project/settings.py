@@ -106,6 +106,7 @@ import os
 # Database setup for render.com
 import os
 
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',

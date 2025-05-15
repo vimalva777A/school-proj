@@ -4,7 +4,8 @@ from django.conf import settings
 from django.conf.urls.static import static
 urlpatterns=[
     # path('run-migrations/', views.run_migrations), # https://school-proj.onrender.com/run-migrations/
-    path('list-migrations/', views.list_migrations),
+    path('list-migrations/', views.list_migrations), #https://school-proj.onrender.com/list-migrations/
+
 
     path('enroll_student/', views.enroll_student, name='enroll_student'),
     path('enroll-teacher/', views.enroll_teacher, name='enroll_teacher'),
