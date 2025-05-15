@@ -6,7 +6,8 @@ services:
       pip install -r requirements.txt
       python manage.py migrate
       python manage.py collectstatic --noinput
-    startCommand: gunicorn school_project.wsgi:application  # 🔁 Replace with your project name
+    startCommand: python manage.py migrate --noinput && gunicorn your_project.wsgi
+  # 🔁 Replace with your project name
     envVars:
       - key: DATABASE_URL
         fromDatabase:
