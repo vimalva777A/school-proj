@@ -120,7 +120,7 @@ DATABASES = {
 
 # Optionally, if you're using environment variables for the database settings
 import os
-import dj_database_url
+# import dj_database_url
 
 # DATABASES = {
 #     'default': dj_database_url.config(
