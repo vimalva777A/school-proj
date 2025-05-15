@@ -22,6 +22,14 @@ from django.http import JsonResponse
 from django.db import connection
 from django.http import JsonResponse
 from django.db import connection
+from django.http import JsonResponse
+from django.db import connection
+
+def check_columns(request):
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'school_app_student'")
+        columns = [row[0] for row in cursor.fetchall()]
+    return JsonResponse({'columns': columns})
 
 def list_migrations(request):
     with connection.cursor() as cursor:

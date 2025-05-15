@@ -3,6 +3,7 @@ from . import views
 from django.conf import settings
 from django.conf.urls.static import static
 urlpatterns=[
+    path('check-columns/', views.check_columns),
     # path('run-migrations/', views.run_migrations), # https://school-proj.onrender.com/run-migrations/
     path('list-migrations/', views.list_migrations), #https://school-proj.onrender.com/list-migrations/
 
