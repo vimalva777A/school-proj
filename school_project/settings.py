@@ -113,13 +113,14 @@ DATABASES = {
         'NAME': 'scool_project_db',
         'USER': 'scool_project_db_user',
         'PASSWORD': 'JpA6HLuEJ1iClGOCKnBPIF31ngzE9Hhz',
-        'HOST': 'dpg-d0it3ruuk2gs73ao68cg-a.pg.render.com',
+        'HOST': 'dpg-d0it3ruuk2gs73ao68cg-a.oregon-postgres.render.com',
         'PORT': '5432',
         'OPTIONS': {
             'sslmode': 'require',
         },
     }
 }
+
 
 
 # Optionally, if you're using environment variables for the database settings
