@@ -18,6 +18,13 @@ def run_migrations(request):
         return HttpResponse("Migrations applied successfully.")
     except Exception as e:
         return HttpResponse(f"Migration failed: {str(e)}")
+from django.http import JsonResponse
+from django.db import connection
+def list_migrations(request):
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT app, name, applied FROM django_migrations ORDER BY applied DESC;")
+        migrations = cursor.fetchall()
+    return JsonResponse({"applied_migrations": migrations})
 
 def index_view(request):
     latest_media = MediaFile.objects.order_by('-uploaded_at')[:10]
