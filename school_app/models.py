@@ -335,7 +335,7 @@ class Student(models.Model):
     roll_number = models.CharField(max_length=20, blank=True, null=True, unique=True)
     role = models.CharField(max_length=50, blank=True, null=True)
     category = models.CharField(max_length=10, choices=CATEGORY_CHOICES, default="General")
-    academic_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE ,null=True, blank=True)
+    academic_year = models.ForeignKey(AcademicYear, on_delete=models.SET_NULL, null=True, blank=True)
     def save(self, *args, **kwargs):
         if not self.roll_number:  # Generate only if roll number is empty
             last_student = Student.objects.filter(assigned_class=self.assigned_class).order_by('-id').first()
@@ -355,7 +355,6 @@ class Student(models.Model):
 
     class Meta:
         unique_together = ("assigned_class", "roll_number")  # Ensure uniqueness per class
-
 
 class Marks(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="marks")

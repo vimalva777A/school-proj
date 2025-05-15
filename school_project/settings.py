@@ -85,6 +85,7 @@ WSGI_APPLICATION = 'school_project.wsgi.application'
 #     }
 # }
 
+# Postrgre on loacl mechine
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql',
