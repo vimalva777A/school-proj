@@ -111,11 +111,27 @@ DATABASES = {
         'PASSWORD': os.getenv('DB_PASSWORD', '7f8AA0UYhKMgq0al3BMLC1RNaNhAwDMr'),
         'HOST': os.getenv('DB_HOST', 'dpg-d0asqt2dbo4c73c6gapg-a.pg.render.com'),  # full hostname here
         'PORT': os.getenv('DB_PORT', '5432'),
+        'OPTIONS': {
+            'sslmode': 'require',
+        },
     }
 }
 
 
 # Optionally, if you're using environment variables for the database settings
+import os
+import dj_database_url
+
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         default=os.getenv(
+#             'DATABASE_URL',
+#             'postgres://school_db_xgmw_user:7f8AA0UYhKMgq0al3BMLC1RNaNhAwDMr@dpg-d0asqt2dbo4c73c6gapg-a.pg.render.com:5432/school_db_xgmw?sslmode=require'
+#         ),
+#         conn_max_age=600,
+#         ssl_require=True,
+#     )
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
