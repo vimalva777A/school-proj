@@ -3,10 +3,11 @@ services:
     name: school_app # 🔁 Replace with your actual app name on Render
     runtime: python
     buildCommand: |
-      pip install -r requirements.txt
-      python manage.py migrate
+            pip install -r requirements.txt
       python manage.py collectstatic --noinput
-    startCommand: python manage.py migrate --noinput && gunicorn your_project.wsgi
+      python manage.py makemigrations
+      python manage.py migrate
+    startCommand: gunicorn project_name.wsgi:application
   # 🔁 Replace with your project name
     envVars:
       - key: DATABASE_URL
