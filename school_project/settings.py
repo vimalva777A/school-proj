@@ -101,7 +101,10 @@ import logging
 
 logger = logging.getLogger('django')
 logger.setLevel(logging.DEBUG)
+import os
 
+# Database setup for render.com
+import os
 
 DATABASES = {
     'default': {
@@ -119,19 +122,6 @@ DATABASES = {
 
 
 # Optionally, if you're using environment variables for the database settings
-import os
-# import dj_database_url
-
-# DATABASES = {
-#     'default': dj_database_url.config(
-#         default=os.getenv(
-#             'DATABASE_URL',
-#             'postgres://school_db_xgmw_user:7f8AA0UYhKMgq0al3BMLC1RNaNhAwDMr@dpg-d0asqt2dbo4c73c6gapg-a.pg.render.com:5432/school_db_xgmw?sslmode=require'
-#         ),
-#         conn_max_age=600,
-#         ssl_require=True,
-#     )
-# }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
