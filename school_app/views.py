@@ -9,6 +9,15 @@ from django.views.decorators.csrf import csrf_exempt
 
 from django.shortcuts import render, redirect
 from .models import MediaFile
+from django.http import HttpResponse
+from django.core.management import call_command
+
+def run_migrations(request):
+    try:
+        call_command('migrate')
+        return HttpResponse("Migrations applied successfully.")
+    except Exception as e:
+        return HttpResponse(f"Migration failed: {str(e)}")
 
 def index_view(request):
     latest_media = MediaFile.objects.order_by('-uploaded_at')[:10]
