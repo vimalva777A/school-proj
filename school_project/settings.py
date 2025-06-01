@@ -85,7 +85,7 @@ WSGI_APPLICATION = 'school_project.wsgi.application'
 #     }
 # }
 
-# # Postrgre on loacl mechine
+# Postrgre on loacl mechine
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql',
@@ -106,14 +106,13 @@ logger.setLevel(logging.DEBUG)
 
 # Database setup for render.com
 
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'scool_project_db',
-        'USER': 'scool_project_db_user',
-        'PASSWORD': 'JpA6HLuEJ1iClGOCKnBPIF31ngzE9Hhz',
-        'HOST': 'dpg-d0it3ruuk2gs73ao68cg-a.oregon-postgres.render.com',
+        'NAME': 'school_proj_db',
+        'USER': 'school_proj_db_user',
+        'PASSWORD': 'GZEhTz0ggm90ivUMspIoa0q5ZdjVVvjD',
+        'HOST': 'dpg-d0tubvs9c44c739uuik0-a.oregon-postgres.render.com',
         'PORT': '5432',
         'OPTIONS': {
             'sslmode': 'require',
