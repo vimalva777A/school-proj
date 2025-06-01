@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Exam Schedule by Date</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background-color: #343a40;
+            padding: 10px 20px;
+            z-index: 1000;
+        }
+        .navbar a {
+            color: white;
+            margin-right: 20px;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .navbar a:hover {
+            text-decoration: underline;
+        }
+        body {
+            padding-top: 60px;
+        }
+        .wide-col {
+            min-width: 200px;
+        }
+        .signature-col {
+            width: 150px;
+        }
+        thead.table-light th {
+            background-color: #f8f9fa;
+            color: #212529;
+            vertical-align: middle;
+        }
+        .col-num-students {
+            width: 100px;
+            text-align: center;
+        }
+        tbody tr:nth-child(odd) {
+            background-color: #fefefe;
+        }
+        tbody tr:nth-child(even) {
+            background-color: #f1f3f5;
+        }
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printable-table, #printable-table * {
+                visibility: visible;
+            }
+            #printable-table {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+        }
+        select.subject-filter {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-weight: 600;
+            color: #212529;
+        }
+        select.subject-filter:focus {
+            outline: none;
+            box-shadow: 0 0 3px #007bff;
+            background: white;
+        }
+    </style>
+</head>
+<body>
+<div class="navbar">
+    <a href="{% url 'exam_department' %}">Exam Department</a>
+    <a href="{% url 'internal_assessment_view' %}">Internal Assessment Entry</a>
+    <a href="{% url 'principal_dashboard' %}">Principal Dashboard</a>
+</div>
+
+<div class="container mt-4">
+    <h2>Exam Schedules</h2>
+
+    <form method="get" id="exam-form" class="mb-4">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-6">
+                <label for="exam_id" class="form-label">Select Exam:</label>
+                <select name="exam_id" id="exam_id" class="form-select" onchange="this.form.submit()">
+                    <option value="">-- Select Exam --</option>
+                    {% for exam in exams %}
+                        <option value="{{ exam.id }}" {% if exam.id|stringformat:"s" == selected_exam_id %}selected{% endif %}>{{ exam.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label for="date" class="form-label">Select Date:</label>
+                <select name="date" id="date" class="form-select" onchange="this.form.submit()">
+                    <option value="">-- Select Date --</option>
+                    {% for date in exam_dates %}
+                        <option value="{{ date }}" {% if date|stringformat:"s" == selected_date %}selected{% endif %}>{{ date }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        {% if selected_subject_id %}
+            <input type="hidden" name="subject_id" value="{{ selected_subject_id }}">
+        {% endif %}
+    </form>
+
+    {% if selected_exam_id and selected_date %}
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5>Schedule for Exam ID {{ selected_exam_id }} on {{ selected_date }}</h5>
+            <div>
+                <a href="?exam_id={{ selected_exam_id }}&date={{ selected_date }}{% if selected_subject_id %}&subject_id={{ selected_subject_id }}{% endif %}&export=excel" class="btn btn-success me-2">Export to Excel</a>
+                <button class="btn btn-primary" onclick="window.print()">Print Schedule</button>
+            </div>
+        </div>
+
+        {% if schedules %}
+            <div id="printable-table" class="table-responsive">
+                <table class="table table-bordered mt-3">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Class</th>
+                            <th class="col-num-students">Number of Students</th>
+                            <th>
+                                Subject
+                                <form method="get" id="subject-filter-form-header" style="margin:0;">
+                                    <input type="hidden" name="exam_id" value="{{ selected_exam_id }}">
+                                    <input type="hidden" name="date" value="{{ selected_date }}">
+                                    <select name="subject_id" class="subject-filter" onchange="document.getElementById('subject-filter-form-header').submit();">
+                                        <option value="">-- All Subjects --</option>
+                                        {% for subject in subjects %}
+                                            <option value="{{ subject.id }}" {% if subject.id|stringformat:"s" == selected_subject_id %}selected{% endif %}>{{ subject.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </form>
+                            </th>
+                            <th>Total Marks</th>
+                            <th>Invigilator</th>
+                            <th class="signature-col">Invigilator Signature</th>
+                            <th>Subject Teacher</th>
+                            <th class="signature-col">Teacher Received Signature</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for schedule in schedules %}
+                            <tr>
+                                <td>{{ schedule.school_class.name }}</td>
+                                <td class="col-num-students">{{ schedule.num_students|default:"0" }}</td>
+                                <td>{{ schedule.subject.name }}</td>
+                                <td>{{ schedule.total_marks }}</td>
+                                <td>{{ schedule.invigilator_name|default:"" }}</td>
+                                <td></td>
+                                <td>{{ schedule.subject_teacher_name|default:"" }}</td>
+                                <td></td>
+                            </tr>
+                        {% endfor %}
+                        <tr class="table-secondary fw-bold">
+                            <td>Total</td>
+                            <td class="col-num-students">{{ total_students }}</td>
+                            <td colspan="6"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p>No schedules found for the selected exam and date.</p>
+        {% endif %}
+    {% else %}
+        <p>Please select an exam and date to view the schedules.</p>
+    {% endif %}
+</div>
+</body>
+</html>

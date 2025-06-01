@@ -1,12 +1,11 @@
 from django.contrib import admin
-from .models import YearlyEvent, PeriodTiming, Subject, Class, Exam, ExamDate, ExamSchedule, Teacher, Teacher_Subject_Class_Relation, SubSubject, ClassSubSubjectAssignment, Timetable, BreakPeriod, Parent, Student, Marks
+from .models import YearlyEvent, PeriodTiming, Subject, Class, Exam, ExamSchedule, Teacher, Teacher_Subject_Class_Relation, SubSubject, ClassSubSubjectAssignment, Timetable, BreakPeriod, Parent, Student, Marks
 from .models import MediaFile
 admin.site.register(YearlyEvent)
 admin.site.register([PeriodTiming,MediaFile])
 admin.site.register(Subject)
 admin.site.register(Class)
 admin.site.register(Exam)
-admin.site.register(ExamDate)
 admin.site.register(ExamSchedule)
 admin.site.register(Teacher)
 admin.site.register(Teacher_Subject_Class_Relation)

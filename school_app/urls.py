@@ -93,10 +93,11 @@ urlpatterns=[
     path("teacher_enrollment_pg", views.teacher_enrollment_pg, name="teacher_enrollment_pg"),
     path('student_enrollment', views.student_enrollment, name='student_enrollment'),
     path("exam_department", views.exam_department, name="exam_department"),
+     path('exams_by_date_view', views.exams_by_date_view, name='exams_by_date_view'),
 
     path('subsubject_management_pg', views.subsubject_management_pg, name='subsubject_management_pg'),
     path('internal_assessment_view', views.internal_assessment_view, name='internal_assessment_view'),
-    path('', views.teacher_dashboard, name='teacher_dashboard'),
+    path('teacher_dashboard', views.teacher_dashboard, name='teacher_dashboard'),
     path('assessment_table', views.assessment_table, name='assessment_table'),
 
     path('principal_dashboard', views.principal_dashboard, name='principal_dashboard'),
@@ -122,10 +123,11 @@ urlpatterns=[
 # student attendance 
     path('attendance_view', views.attendance_view, name='attendance_view'),
     path('attendance_list_view', views.attendance_list_view, name='attendance_list_view'),
-    path('student_assessment_report', views.student_assessment_report, name='student_assessment_report'), 
+    path('', views.student_assessment_report, name='student_assessment_report'), 
     path('student/<int:student_id>/', views.student_detail, name='student_detail'),
     path('student/<int:student_id>/internal-assessment/', views.student_internal_assessment, name='student_internal_assessment'),
-    
+    path('student/<int:student_id>/marksheet/', views.student_marksheet_view, name='student_marksheet'),
+
     path("solution_based_sorting_view",views.solution_based_sorting_view, name="solution_based_sorting_view"),
 
     path('create_academic_year', views.create_academic_year, name='create_academic_year'),
@@ -138,7 +140,22 @@ urlpatterns=[
     path('delete_event/<int:event_id>/', views.delete_event, name='delete_event'),
     path('edit_event/<int:event_id>/', views.edit_event, name='edit_event'),
 
-     path('contact_page', views.contact_page, name='contact_page'),
+    path('contact_page', views.contact_page, name='contact_page'),
+    path('promote-students/',views. promote_students, name='promote_students'),
+    path('student/<int:student_id>/transfer/', views. transfer_student, name='transfer_student'),
+    path("transferred_student_list", views.transferred_student_list, name="transferred_student_list"),
+   
+     path("ai_timetable_setup_pg", views.ai_timetable_setup_pg, name="ai_timetable_setup_pg"),
+     path('generate_timetable_with_ai/', views.generate_timetable_with_ai, name='generate_timetable_with_ai'),
+     path('display_ai_timetable', views.display_ai_timetable, name='display_ai_timetable'),
+     path('assign_class_teachers_view', views.assign_class_teachers_view, name='assign_class_teachers_view'),
+     path('assign_class_teachers/', views.assign_class_teachers, name='assign_class_teachers'),
+     path('mark_teacher_attendance_view', views.mark_teacher_attendance_view, name='mark_teacher_attendance_view'),
+     path('mark_teacher_attendance/', views.mark_teacher_attendance_view, name='mark_teacher_attendance'),
+     path('generate_daily_timetable_view/', views.generate_daily_timetable_view, name='generate_daily_timetable_view'),
+     path('daily_timetable_view/', views.daily_timetable_view, name='daily_timetable_view'),
+     path('school_profile_view/', views.school_profile_view, name='school_profile_view')
+
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
     

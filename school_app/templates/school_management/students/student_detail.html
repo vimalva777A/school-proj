@@ -151,11 +151,18 @@
     </div>
   </section>
 
-  <!-- Export Button -->
+  <!-- Export & Marksheet Buttons -->
   <div class="text-end mb-5">
     <button id="export-pdf" class="btn btn-custom">Export as PDF</button>
+    <a href="{% url 'student_marksheet' student.id %}" class="btn btn-secondary ms-2">View Marksheet</a>
   </div>
   {% endif %}
+
+  <form action="{% url 'transfer_student' student.id %}" method="post" onsubmit="return confirm('Are you sure you want to transfer this student? This action cannot be undone.');">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger mt-3">Transfer Student</button>
+  </form>
+
 </main>
 
 <!-- Chart & PDF Script -->

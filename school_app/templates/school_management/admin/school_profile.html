@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>School Profile</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      padding-top: 70px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="#">School System</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarNavDropdown">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="/student_enrollment">Student Enrollment</a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Admin Tools</a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="/teacher_enrollment_pg">Teacher Enrollment</a></li>
+            <li><a class="dropdown-item" href="/class_creation_pg">Class Creation</a></li>
+            <li><a class="dropdown-item" href="/class_subject_management_pg">Class Subject Management</a></li>
+            <li><a class="dropdown-item" href="/transferred_student_list">Transferred Students List</a></li>
+          </ul>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Timetable</a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="/timetable_view">Overview</a></li>
+            <li><a class="dropdown-item" href="/display_ai_timetable">AI Timetable</a></li>
+            <li><a class="dropdown-item" href="/teacher_timetable_pg">Teacher Timetable</a></li>
+            <li><a class="dropdown-item" href="/class_timetable_page">Class Timetable</a></li>
+            <li><a class="dropdown-item" href="/free_teachers_view">Free Teachers</a></li>
+            <li><a class="dropdown-item" href="/teacher_subject_class_table">Teacher Subject Class Table</a></li>
+            <li><a class="dropdown-item" href="/classroom_overview">Classroom Overview</a></li>
+            <li><a class="dropdown-item" href="/ai_timetable_setup_pg">AI Timetable Generation</a></li>
+          </ul>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Attendance</a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="/attendance_view">Student Attendance</a></li>
+            <li><a class="dropdown-item" href="/mark_teacher_attendance_view">Teacher Attendance</a></li>
+          </ul>
+        </li>
+        <li class="nav-item"><a class="nav-link" href="/create_academic_year">Academic Year</a></li>
+        <li class="nav-item"><a class="nav-link" href="/year_planner/">Year Planner</a></li>
+        <li class="nav-item"><a class="nav-link" href="/exam_department">Exam Dept.</a></li>
+        <li class="nav-item"><a class="nav-link" href="/teacher_dashboard">Teacher Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="/student_assessment_report">Students Assessment</a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Media</a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="/media_upload">Upload</a></li>
+            <li><a class="dropdown-item" href="/media_gallery">Gallery</a></li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- Page Content -->
+<div class="container mt-4">
+  <h2>School Profile</h2>
+  <form method="post" enctype="multipart/form-data" class="border p-4 rounded bg-light shadow-sm">
+    {% csrf_token %}
+
+    <div class="mb-3">
+      <label class="form-label">School Name</label>
+      <input type="text" name="name" class="form-control" value="{{ profile.name }}">
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Address</label>
+      <textarea name="address" class="form-control">{{ profile.address }}</textarea>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Phone Number</label>
+      <input type="text" name="phone_number" class="form-control" value="{{ profile.phone_number }}">
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Contact Number</label>
+      <input type="text" name="contact_number" class="form-control" value="{{ profile.contact_number }}">
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Email</label>
+      <input type="email" name="email" class="form-control" value="{{ profile.email }}">
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Principal Name</label>
+      <input type="text" name="principal_name" class="form-control" value="{{ profile.principal_name }}">
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Logo</label><br>
+      {% if profile.logo %}
+        <img src="{{ profile.logo.url }}" alt="Logo" class="img-thumbnail mb-2" style="max-height: 120px;"><br>
+      {% endif %}
+      <input type="file" name="logo" class="form-control">
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save Profile</button>
+  </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

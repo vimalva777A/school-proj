@@ -4,16 +4,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Welcome to JIEMS</title>
+  <title>Welcome to {{ school_profile.name }}</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
   <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet" />
   <link rel="icon" href="/static/favicon.ico" type="image/x-icon" />
   <style>
-    html {
-      scroll-behavior: smooth;
-    }
-
+    html { scroll-behavior: smooth; }
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0;
@@ -21,8 +18,6 @@
       color: white;
       position: relative;
     }
-
-    /* Background animation with colorful gradient */
     .hero {
       color: #fff;
       min-height: 100vh;
@@ -38,68 +33,40 @@
       position: relative;
       overflow: hidden;
     }
-
-    /* Animated gradient background */
     @keyframes gradientBG {
-      0% {
-        background-position: 0% 50%;
-      }
-      50% {
-        background-position: 100% 50%;
-      }
-      100% {
-        background-position: 0% 50%;
-      }
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
     }
-
-    /* Children Animation (Balloons and Clouds) */
     .children-animation {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
       pointer-events: none;
       z-index: -1;
     }
-
     .balloon {
       position: absolute;
       background-color: #ffcc00;
-      width: 50px;
-      height: 70px;
+      width: 50px; height: 70px;
       border-radius: 50%;
       animation: float 5s infinite ease-in-out;
     }
-
     .balloon:nth-child(2) {
       background-color: #ff6699;
       animation-delay: 2s;
-      width: 60px;
-      height: 80px;
+      width: 60px; height: 80px;
     }
-
     .balloon:nth-child(3) {
       background-color: #66cc66;
       animation-delay: 4s;
-      width: 70px;
-      height: 90px;
+      width: 70px; height: 90px;
     }
-
-    /* Balloons floating animation */
     @keyframes float {
-      0% {
-        transform: translateY(0);
-      }
-      50% {
-        transform: translateY(-150px);
-      }
-      100% {
-        transform: translateY(0);
-      }
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-150px); }
+      100% { transform: translateY(0); }
     }
-
-    /* Cloud Animation */
     .cloud {
       position: absolute;
       top: 10%;
@@ -112,42 +79,23 @@
       opacity: 0.5;
       animation: cloudMove 10s linear infinite;
     }
-
-    .cloud:nth-child(2) {
-      width: 120px;
-      height: 70px;
-      animation-delay: 4s;
-    }
-
-    .cloud:nth-child(3) {
-      width: 130px;
-      height: 80px;
-      animation-delay: 6s;
-    }
-
-    /* Cloud movement animation */
+    .cloud:nth-child(2) { width: 120px; height: 70px; animation-delay: 4s; }
+    .cloud:nth-child(3) { width: 130px; height: 80px; animation-delay: 6s; }
     @keyframes cloudMove {
-      0% {
-        left: -20%;
-      }
-      100% {
-        left: 120%;
-      }
+      0% { left: -20%; }
+      100% { left: 120%; }
     }
-
     .hero-text h1 {
       font-size: 4rem;
       font-weight: bold;
       margin-bottom: 0.3rem;
       animation: fadeIn 2s ease-in-out;
     }
-
     .hero-text p {
       font-size: 1.5rem;
       margin-top: 0;
       animation: fadeIn 3s ease-in-out;
     }
-
     .btn-primary {
       background-color: #007bff;
       border: none;
@@ -158,16 +106,13 @@
       box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
       transition: background-color 0.3s ease, transform 0.3s ease;
     }
-
     .btn-primary:hover {
       background-color: #0056b3;
       transform: scale(1.1);
     }
-
     .section {
       padding: 2rem 5%;
     }
-
     .section-title {
       font-size: 2.5rem;
       margin-bottom: 1.5rem;
@@ -175,23 +120,19 @@
       color: #bbb;
       text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
     }
-
     .card {
       transition: transform 0.3s ease-in-out;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
     }
-
     .card:hover {
       transform: scale(1.05);
       box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
     }
-
     #about {
       margin-top: 0 !important;
       padding-top: 1rem !important;
       padding-bottom: 1.5rem !important;
     }
-
     .footer {
       background-color: #212121;
       padding: 3rem;
@@ -200,35 +141,19 @@
       border-top: 1px solid #444;
       position: relative;
     }
-
     .footer .social-icons i {
       font-size: 1.5rem;
       margin: 0 15px;
       transition: color 0.3s ease;
     }
-
     .footer .social-icons i:hover {
       color: #007bff;
     }
-
-    /* AOS Animation */
     @keyframes fadeIn {
-      0% {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-      100% {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      0% { opacity: 0; transform: translateY(30px); }
+      100% { opacity: 1; transform: translateY(0); }
     }
-
-    /* Scrollable gallery thumbnails */
-    .carousel-thumbnail-wrapper {
-      width: 100%;
-      overflow: hidden;
-    }
-
+    .carousel-thumbnail-wrapper { width: 100%; overflow: hidden; }
     .carousel-thumbnail-container {
       display: flex;
       flex-wrap: nowrap;
@@ -243,7 +168,7 @@
 <body>
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
     <div class="container-fluid">
-      <a class="navbar-brand fw-bold" href="#">JIEMS</a>
+      <a class="navbar-brand fw-bold" href="#">{{ school_profile.name }}</a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
         <span class="navbar-toggler-icon"></span>
       </button>
@@ -260,9 +185,7 @@
   </nav>
 
   <section id="hero" class="hero">
-    <!-- Children animation background -->
     <div class="children-animation">
-      <!-- Clouds and balloons floating in the background -->
       <div class="balloon" style="top: 30%; left: 10%; animation-duration: 6s;"></div>
       <div class="balloon" style="top: 60%; left: 40%; animation-duration: 8s;"></div>
       <div class="balloon" style="top: 80%; left: 20%; animation-duration: 10s;"></div>
@@ -272,7 +195,7 @@
     </div>
 
     <div class="hero-text text-center" data-aos="fade-up">
-      <h1>Welcome to JIEMS</h1>
+      <h1>Welcome to {{ school_profile.name }}</h1>
       <p>Your journey towards academic excellence starts here</p>
       <a href="{% url 'principal_dashboard' %}" class="btn btn-primary">Get Started</a>
     </div>
@@ -280,7 +203,7 @@
 
   <section id="about" class="container section text-center">
     <h2 class="section-title" data-aos="fade-up" data-aos-delay="100">Our Mission</h2>
-    <p data-aos="fade-up" data-aos-delay="200">JIEMS is committed to nurturing academic excellence and character development through a supportive and innovative learning environment.</p>
+    <p data-aos="fade-up" data-aos-delay="200">{{ school_profile.name }} is committed to nurturing academic excellence and character development through a supportive and innovative learning environment.</p>
   </section>
 
   <section id="gallery" class="container section">
@@ -298,7 +221,7 @@
           {% for media in media_files %}
             {% if media.media_type == 'image' %}
               <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                <img src="{{ media.file.url }}" class="main-image" alt="{{ media.title }}">
+                <img src="{{ media.file.url }}" class="d-block w-100" alt="Gallery image" />
               </div>
             {% endif %}
           {% endfor %}
@@ -313,22 +236,32 @@
         </button>
       </div>
     </div>
+    <div class="carousel-thumbnail-wrapper mt-3">
+      <div class="carousel-thumbnail-container">
+        {% for media in media_files %}
+          {% if media.media_type == 'image' %}
+            <img src="{{ media.file.url }}" class="img-thumbnail mx-1" style="height: 60px; cursor: pointer;" onclick="document.querySelector('#carouselExampleIndicators').carousel({{ forloop.counter0 }})" alt="Thumbnail" />
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
   </section>
 
   <footer class="footer">
-    <p class="mb-0">&copy; 2025 JIEMS - All Rights Reserved</p>
-    <div class="social-icons">
-      <i class="bi bi-facebook"></i>
-      <i class="bi bi-twitter"></i>
-      <i class="bi bi-instagram"></i>
+    <div class="container">
+      <p class="mb-0">&copy; 2025 {{ school_profile.name }} - All Rights Reserved</p>
+      <div class="social-icons mt-3">
+        <a href="#" class="text-white me-3"><i class="bi bi-facebook"></i></a>
+        <a href="#" class="text-white me-3"><i class="bi bi-twitter"></i></a>
+        <a href="#" class="text-white me-3"><i class="bi bi-instagram"></i></a>
+        <a href="#" class="text-white"><i class="bi bi-linkedin"></i></a>
+      </div>
     </div>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-  <script>
-    AOS.init();
-  </script>
+  <script>AOS.init();</script>
 </body>
 
 </html>

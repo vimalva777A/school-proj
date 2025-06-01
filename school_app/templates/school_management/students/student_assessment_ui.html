@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -106,6 +106,7 @@
             <tr>
               <th>Student Name</th>
               <th>Average Performance</th>
+              <th>Marksheet</th>
             </tr>
           </thead>
           <tbody>
@@ -129,6 +130,11 @@
                   </div>
                 </div>
                 <small class="text-muted">{{ assessment.average_percentage|floatformat:2 }}%</small>
+              </td>
+              <td>
+                <a href="{% url 'student_marksheet' student_id=assessment.student.id %}" class="btn btn-sm btn-outline-primary">
+                  View Marksheet
+                </a>
               </td>
             </tr>
             {% endfor %}

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Transferred Students</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar {
+            background-color: #007BFF;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            margin-right: 20px;
+            font-weight: bold;
+        }
+
+        .navbar a:hover {
+            text-decoration: underline;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        h2 {
+            color: #333;
+            margin-top: 0;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            font-family: Consolas, monospace;
+            font-size: 0.9em;
+            background-color: #f9f9f9;
+            padding: 8px;
+            border: 1px dashed #ccc;
+        }
+
+        .button {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 15px;
+            background-color: #007BFF;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+
+        .button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <a href="{% url 'student_assessment_report' %}">Student List</a>
+        <a href="{% url 'transferred_student_list' %}">Transferred Students</a>
+        <a href="{% url 'principal_dashboard' %}">Principal Dashboard</a>
+    </div>
+
+    <div class="container">
+        <h2>Transferred Students</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Username</th>
+                    <th>Class</th> <!-- Added Class column -->
+                    <th>Parent Email</th>
+                    <th>Parent Phone</th>
+                    <th>Transferred On</th>
+                    <th>Marks Snapshot</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                <tr>
+                    <td>{{ student.name }}</td>
+                    <td>{{ student.username }}</td>
+                    <td>{{ student.student_class|default:"N/A" }}</td> <!-- Display class here -->
+                    <td>{{ student.parent_email|default:"N/A" }}</td>
+                    <td>{{ student.parent_phone|default:"N/A" }}</td>
+                    <td>{{ student.transferred_on|date:"Y-m-d H:i" }}</td>
+                    <td>
+                        {% if student.marks_snapshot %}
+                            <pre>{{ student.marks_snapshot|safe }}</pre>
+                        {% else %}
+                            No marks recorded
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">No transferred students found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <a class="button" href="{% url 'principal_dashboard' %}">Back to Home</a>
+    </div>
+
+</body>
+</html>

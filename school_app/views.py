@@ -5,7 +5,7 @@ from .models import Class, Teacher, Teacher_Subject_Class_Relation,PeriodTiming,
 from django.shortcuts import get_object_or_404
 from django.utils.timezone import now
 from django.views.decorators.csrf import csrf_exempt
-
+from django.utils import timezone
 
 from django.shortcuts import render, redirect
 from .models import MediaFile
@@ -37,12 +37,17 @@ def list_migrations(request):
         migrations = cursor.fetchall()
     return JsonResponse({"applied_migrations": migrations})
 
+from django.utils.timezone import now
+from .models import MediaFile, SchoolProfile
 
 def index_view(request):
     latest_media = MediaFile.objects.order_by('-uploaded_at')[:10]
+    school_profile = SchoolProfile.objects.first()
+
     return render(request, 'school_management/index.html', {
         'media_files': latest_media,
-        'year': now().year
+        'year': now().year,
+        'school_profile': school_profile,
     })
 
 
@@ -2486,7 +2491,7 @@ def exam_department(request):
          "selected_exam": selected_exam,
          "total_marks_list": total_marks_list,
     }
-    return render(request, "school_management/exam_department.html", context)
+    return render(request, "school_management/Exam_department/exam_department.html", context)
 
 
 from django.shortcuts import render, get_object_or_404
@@ -2632,7 +2637,234 @@ def get_exam_schedule(request, exam_id):
     return JsonResponse(data, safe=False)
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
-from .models import Student, Marks, Timetable
+
+from django.shortcuts import render
+from django.utils.dateparse import parse_date
+from .models import Exam, ExamSchedule
+
+from django.shortcuts import render
+from django.utils.dateparse import parse_date
+from .models import Exam, ExamSchedule
+
+from django.shortcuts import render
+from django.utils.dateparse import parse_date
+from .models import Exam, ExamSchedule, Class, Subject, Teacher_Subject_Class_Relation
+
+from django.utils.dateparse import parse_date
+from .models import Exam, ExamSchedule
+
+from django.utils.dateparse import parse_date
+from .models import Exam, ExamSchedule
+
+from django.utils.dateparse import parse_date
+
+from django.shortcuts import render
+from django.utils.dateparse import parse_date
+from .models import Exam, ExamSchedule
+
+from django.shortcuts import render
+from django.utils.dateparse import parse_date
+from .models import Exam, ExamSchedule
+
+from django.db.models import OuterRef, Subquery, Q
+from .models import Teacher_Subject_Class_Relation
+
+from django.shortcuts import render
+from .models import Exam, ExamSchedule, Teacher_Subject_Class_Relation
+from datetime import datetime
+
+from datetime import datetime
+from django.shortcuts import render
+from .models import Exam, ExamSchedule, Teacher_Subject_Class_Relation
+from datetime import datetime
+
+import re
+from datetime import datetime
+
+def get_class_number(class_obj):
+    # Extract number from class name like "10th", "9th", etc.
+    match = re.search(r'\d+', class_obj.name)
+    return int(match.group()) if match else 0
+
+from django.db.models import Count
+from datetime import datetime
+from django.shortcuts import render
+from .models import Exam, ExamSchedule, Teacher_Subject_Class_Relation
+
+from datetime import datetime
+
+from datetime import datetime
+from django.shortcuts import render
+from .models import Exam, ExamSchedule, Teacher_Subject_Class_Relation ,Student # Adjust import paths
+from django.db.models.signals import post_save, post_delete
+from datetime import datetime
+from django.shortcuts import render
+from .models import Exam, ExamSchedule, Teacher_Subject_Class_Relation,Student  # Adjust imports as per your app
+from datetime import datetime
+from django.db.models import Count
+from django.shortcuts import render
+from .models import Exam, ExamSchedule, Teacher_Subject_Class_Relation, Student, Class
+from datetime import datetime
+from django.shortcuts import render
+from .models import Exam, ExamSchedule, Teacher_Subject_Class_Relation
+from datetime import datetime
+from django.shortcuts import render
+
+import re
+from datetime import datetime
+from django.shortcuts import render
+
+import re
+from datetime import datetime
+from django.shortcuts import render
+from django.http import HttpResponse
+from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
+
+from django.shortcuts import render
+from django.http import HttpResponse
+from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
+from datetime import datetime
+import re
+
+from .models import Exam, ExamSchedule, Teacher_Subject_Class_Relation
+
+
+from datetime import datetime
+import re
+from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
+from django.http import HttpResponse
+from django.shortcuts import render
+from .models import Exam, ExamSchedule, Teacher_Subject_Class_Relation  # Adjust imports as needed
+
+def exams_by_date_view(request):
+    def parse_date_safe(date_str):
+        cleaned_str = date_str.replace("Sept.", "Sep").replace("Sept", "Sep")
+        for fmt in ("%Y-%m-%d", "%B %d, %Y", "%b %d, %Y"):
+            try:
+                return datetime.strptime(cleaned_str, fmt).date()
+            except ValueError:
+                continue
+        return None
+
+    def extract_class_number(class_name):
+        match = re.match(r'(\d+)', class_name)
+        if match:
+            return int(match.group(1))
+        return 9999
+
+    def export_schedules_to_excel(schedules):
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Exam Schedule"
+
+        headers = [
+            "Class",
+            "Number of Students",
+            "Subject",
+            "Total Marks",
+            "Invigilator",
+            "Invigilator Signature",
+            "Subject Teacher",
+            "Teacher Received Signature",
+        ]
+        ws.append(headers)
+
+        col_widths = [15, 20, 20, 15, 25, 25, 25, 25]
+        for i, width in enumerate(col_widths, start=1):
+            ws.column_dimensions[get_column_letter(i)].width = width
+
+        for s in schedules:
+            row = [
+                s['school_class'].name,
+                s['num_students'],
+                s['subject'].name,
+                s['total_marks'],
+                s.get('invigilator_name', ''),
+                "",
+                s.get('subject_teacher_name', ''),
+                "",
+            ]
+            ws.append(row)
+
+        return wb
+
+    exams = Exam.objects.all()
+    selected_exam_id = request.GET.get('exam_id')
+    selected_date = request.GET.get('date')
+    selected_subject_id = request.GET.get('subject_id')
+    export_format = request.GET.get('export')  # e.g. 'excel'
+    schedules = []
+    exam_dates = []
+    subjects = []
+
+    if selected_exam_id:
+        exam_dates_qs = ExamSchedule.objects.filter(exam_id=selected_exam_id) \
+                                            .values_list('date', flat=True) \
+                                            .distinct()
+        exam_dates = sorted(set(exam_dates_qs))
+
+        subjects_qs = ExamSchedule.objects.filter(exam_id=selected_exam_id) \
+                                         .values('subject__id', 'subject__name') \
+                                         .distinct()
+        subjects = [{'id': s['subject__id'], 'name': s['subject__name']} for s in subjects_qs]
+
+        if selected_date:
+            parsed_date = parse_date_safe(selected_date)
+
+            if parsed_date:
+                schedule_qs = ExamSchedule.objects.filter(
+                    exam_id=selected_exam_id,
+                    date=parsed_date
+                ).select_related('school_class', 'subject')
+
+                if selected_subject_id:
+                    schedule_qs = schedule_qs.filter(subject_id=selected_subject_id)
+
+                for entry in schedule_qs:
+                    subject_teacher_relation = Teacher_Subject_Class_Relation.objects.filter(
+                        subject=entry.subject,
+                        assigned_classes=entry.school_class,
+                        teacher__isnull=False
+                    ).select_related('teacher').first()
+
+                    schedules.append({
+                        "school_class": entry.school_class,
+                        "num_students": entry.school_class.students.count(),
+                        "subject": entry.subject,
+                        "total_marks": entry.total_marks,
+                        "subject_teacher_name": subject_teacher_relation.teacher.name if subject_teacher_relation else "",
+                        "invigilator_name": getattr(entry, 'invigilator_name', ''),
+                    })
+
+                schedules.sort(key=lambda s: extract_class_number(s['school_class'].name))
+
+    # Calculate total number of students
+    total_students = sum(s['num_students'] for s in schedules) if schedules else 0
+
+    if export_format == 'excel' and schedules:
+        wb = export_schedules_to_excel(schedules)
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        filename = f"Exam_Schedule_{selected_exam_id}_{selected_date}.xlsx"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        wb.save(response)
+        return response
+
+    context = {
+        "exams": exams,
+        "selected_exam_id": selected_exam_id,
+        "selected_date": selected_date,
+        "exam_dates": exam_dates,
+        "subjects": subjects,
+        "selected_subject_id": selected_subject_id,
+        "schedules": schedules,
+        "total_students": total_students,  # Pass total students to template
+    }
+    return render(request, "school_management/Exam_department/exams_by_date.html", context)
 
 def get_student_profile(request, student_id):
     student = get_object_or_404(Student, id=student_id)
@@ -3132,7 +3364,7 @@ def student_assessment_report(request):
         'search_name': search_name,
     }
 
-    return render(request, 'school_management/student_assessment_ui.html', context)
+    return render(request, 'school_management/students/student_assessment_ui.html', context)
 
 from django.shortcuts import get_object_or_404, render
 from .models import Student, StudentAttendance, Exam, Marks, ExamSchedule, StudentSubjectRemark
@@ -3258,10 +3490,160 @@ def student_detail(request, student_id):
         'percentage': overall_percentage,
     }
 
-    return render(request, 'school_management/student_detail.html', context)
+    return render(request, 'school_management/students/student_detail.html', context)
+from django.shortcuts import render, get_object_or_404
+from .models import Student, Exam, Marks, ExamSchedule, StudentSubjectRemark
+from django.shortcuts import render, get_object_or_404
+from .models import Student, Exam, Marks, ExamSchedule, StudentSubjectRemark, SchoolProfile
+from django.shortcuts import render, get_object_or_404
+from .models import Student, Exam, Marks, ExamSchedule, StudentSubjectRemark, SchoolProfile
+from django.shortcuts import render, get_object_or_404
+from .models import (
+    Student, Exam, Marks, ExamSchedule, StudentSubjectRemark,
+    SchoolProfile
+)
+
+from django.shortcuts import get_object_or_404, render
+from .models import Student, SchoolProfile, Exam, Marks, ExamSchedule, StudentSubjectRemark, Class
+
+def student_marksheet_view(request, student_id):
+    # Fetch student with related info (including assigned_class)
+    student = get_object_or_404(
+        Student.objects.select_related('parent', 'assigned_class', 'academic_year'),
+        id=student_id
+    )
+    
+    # Fetch the first (or only) school profile
+    school_profile = SchoolProfile.objects.first()
+    
+    exam1_id = request.GET.get('exam1')
+    exam2_id = request.GET.get('exam2')
+    
+    exams = Exam.objects.all().order_by('-id')
+    
+    exam1 = Exam.objects.filter(id=exam1_id).first() if exam1_id else None
+    exam2 = Exam.objects.filter(id=exam2_id).first() if exam2_id else None
+    
+    marks_by_exam = {}
+    
+    for exam_id in [exam1_id, exam2_id]:
+        if exam_id:
+            marks_records = Marks.objects.filter(student=student, exam_id=exam_id).select_related('subject')
+            schedules = ExamSchedule.objects.filter(exam_id=exam_id, school_class=student.assigned_class)
+            remarks = StudentSubjectRemark.objects.filter(student=student, exam_id=exam_id)
+    
+            schedule_dict = {s.subject.id: s for s in schedules}
+            remark_dict = {r.subject.id: r.remark for r in remarks}
+    
+            marks_data = []
+            for mark in marks_records:
+                subject = mark.subject
+                total_marks = schedule_dict.get(subject.id).total_marks if schedule_dict.get(subject.id) else 0
+                obtained = mark.marks_obtained
+                percentage = round((obtained / total_marks) * 100, 2) if total_marks else 0
+                marks_data.append({
+                    'subject': subject.name,
+                    'obtained': obtained,
+                    'total': total_marks,
+                    'percentage': percentage,
+                    'remark': remark_dict.get(subject.id, ''),
+                })
+    
+            marks_by_exam[str(exam_id)] = marks_data
+    
+    marks_exam1 = marks_by_exam.get(str(exam1_id), []) if exam1_id else []
+    marks_exam2 = marks_by_exam.get(str(exam2_id), []) if exam2_id else []
+    
+    # Get the assigned class object (to get class teacher)
+    assigned_class = student.assigned_class
+    
+    # Get class teacher name if exists
+    class_teacher_name = ""
+    if assigned_class and hasattr(assigned_class, 'class_teacher') and assigned_class.class_teacher:
+        class_teacher_name = assigned_class.class_teacher.name
+    
+    context = {
+        'student': student,
+        'exams': exams,
+        'exam1_id': exam1_id,
+        'exam2_id': exam2_id,
+        'exam1_name': exam1.name if exam1 else '',
+        'exam2_name': exam2.name if exam2 else '',
+        'marks_exam1': marks_exam1,
+        'marks_exam2': marks_exam2,
+        'school_name': school_profile.name if school_profile else "Your School Name",
+        'school_address': school_profile.address if school_profile else "School Address Here",
+        'school_phone': school_profile.phone_number if school_profile else "",
+        'school_email': school_profile.email if school_profile else "",
+        'principal_name': school_profile.principal_name if school_profile else "",
+        'school_logo_url': school_profile.logo.url if (school_profile and school_profile.logo) else "",
+        'class_teacher_name': class_teacher_name,
+        'selected_class_obj': assigned_class,  # pass for template access if needed
+        'now': timezone.localtime(timezone.now())
+    }
+    
+    return render(request, 'school_management/students/student_marksheet.html', context)
 
 from django.shortcuts import render, get_object_or_404
 from .models import Student, Exam, InternalAssessment, StudentSubjectRemark
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+from django.db import transaction
+import json
+from .models import TransferredStudent
+# views.py
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+from .models import Student, Parent, Marks, TransferredStudent
+from django.utils import timezone
+from django.shortcuts import get_object_or_404, redirect
+from django.utils import timezone
+import json
+
+def transfer_student(request, student_id):
+    student = get_object_or_404(Student, pk=student_id)
+
+    if request.method == "POST":
+        marks = student.marks.all()
+        marks_data = []
+        for mark in marks:
+            marks_data.append({
+                "subject": mark.subject.name,
+                "exam": mark.exam.name,
+                "marks_obtained": mark.marks_obtained,
+                "total_obtained_marks": mark.total_obtained_marks,
+                "remarks": mark.remarks,
+            })
+        marks_data_json = json.dumps(marks_data)
+
+        student_class_name = str(student.assigned_class) if student.assigned_class else None
+
+        parent = student.parent
+        parent_name = parent.name if parent else None
+        parent_email = parent.email if parent else None
+        parent_phone = parent.phone if parent else None
+
+        # Update this based on actual fields in your TransferredStudent model
+        transferred_student = TransferredStudent.objects.create(
+            name=student.name,
+            # pen=student.pen,  # Remove if no such field
+            # aadhar=student.aadhar,
+            # phone=student.phone,
+            parent_name=parent_name,
+            parent_email=parent_email,
+            parent_phone=parent_phone,
+            student_class=student_class_name,
+            transferred_on=timezone.now(),
+            marks_snapshot=marks_data_json,
+        )
+
+        marks.delete()
+        student.delete()
+
+        return redirect('transferred_student_list')
+
+    return redirect('student_detail', student_id=student_id)
+
 
 def student_internal_assessment(request, student_id):
     student = get_object_or_404(Student, id=student_id)
@@ -3663,3 +4045,885 @@ def add_holiday(request):
     return render(request, 'school_management/add_holiday.html', {
         'academic_years': academic_years
     })
+# views.py
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from .models import Student, Class, AcademicYear
+
+def promote_students(request):
+    classes = Class.objects.all()
+    academic_years = AcademicYear.objects.all()
+    selected_class_id = request.GET.get('class_id')
+    students = []
+
+    if selected_class_id:
+        students = Student.objects.filter(assigned_class_id=selected_class_id)
+
+    if request.method == 'POST':
+        selected_students = request.POST.getlist('students')
+        new_class_id = request.POST.get('new_class')
+        new_academic_year_id = request.POST.get('new_academic_year')
+
+        if not selected_students or not new_class_id or not new_academic_year_id:
+            messages.error(request, "Please select all fields before submitting.")
+            return redirect(request.path + f"?class_id={selected_class_id}")
+
+        for student_id in selected_students:
+            try:
+                student = Student.objects.get(id=student_id)
+                student.assigned_class_id = new_class_id
+                student.academic_year_id = new_academic_year_id
+                student.roll_number = None  # Triggers regeneration in `save()`
+                student.save()
+            except Student.DoesNotExist:
+                continue
+
+        messages.success(request, f"{len(selected_students)} students promoted successfully!")
+        return redirect(request.path)
+
+    return render(request, 'school_management/promote_students.html', {
+        'classes': classes,
+        'academic_years': academic_years,
+        'students': students,
+        'selected_class_id': int(selected_class_id) if selected_class_id else None,
+    })
+
+from django.shortcuts import render
+from .models import TransferredStudent,AITimetableEntry
+
+def transferred_student_list(request):
+    students = TransferredStudent.objects.all().order_by('-transferred_on')
+    return render(request, 'school_management/transferred_student_list.html', {'students': students})
+
+
+def ai_timetable_setup_pg(request):
+    """
+    Render the form page where the user can input parameters to generate the AI timetable.
+    """
+    return render(request, 'school_management/Timetable/AI_Timetable_setup_pg.html')
+
+from django.shortcuts import redirect
+from django.contrib import messages
+
+
+
+
+
+from django.shortcuts import redirect
+from django.http import HttpResponseNotAllowed
+from django.contrib import messages
+from collections import defaultdict
+from datetime import datetime, timedelta
+import random
+
+from school_app.models import (
+    Class, SchoolDay, AITimetableEntry,
+    Subject, Teacher_Subject_Class_Relation
+)
+
+from collections import defaultdict
+from datetime import datetime, timedelta
+import random
+
+from datetime import datetime, timedelta
+from collections import defaultdict
+import random
+
+from django.http import HttpResponseNotAllowed
+from django.shortcuts import redirect
+from django.contrib import messages
+
+from .models import (
+    AITimetableSettings,
+    AITimetableEntry,
+    SchoolDay,
+    Class,
+    Teacher_Subject_Class_Relation,
+    Subject
+)
+
+def generate_timetable_with_ai(request):
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+
+    try:
+        # Step 1: Fetch AI timetable settings from form input
+        periods_per_day = int(request.POST.get('num_periods', 8))
+        days_per_week = 6  # Monday to Saturday
+
+        start_hour = int(request.POST.get('start_hour', 8))
+        start_minute = int(request.POST.get('start_minute', 0))
+        period_duration = int(request.POST.get('period_duration', 45))
+        gap_minutes = int(request.POST.get('gap_minutes', 5))
+        break_after_period_1 = int(request.POST.get('break_after_period_1', 3))
+        break_after_period_2 = int(request.POST.get('break_after_period_2', 6))
+        break_duration = int(request.POST.get('break_duration', 15))
+
+        # Step 2: Store or update AI settings in the database
+        AITimetableSettings.objects.all().delete()  # Ensure only one setting
+        AITimetableSettings.objects.create(
+            num_periods=periods_per_day,
+            period_duration=period_duration,
+            gap_between_periods=gap_minutes,
+            break_after_period_1=break_after_period_1,
+            break_after_period_2=break_after_period_2,
+            break_duration=break_duration,
+            start_hour=start_hour,
+            start_minute=start_minute,
+        )
+
+        # Step 3: Setup required school days
+        day_code_map = {
+            'Monday': 'Mon', 'Tuesday': 'Tue', 'Wednesday': 'Wed',
+            'Thursday': 'Thu', 'Friday': 'Fri', 'Saturday': 'Sat'
+        }
+        needed_days = list(day_code_map.keys())[:days_per_week]
+        needed_day_codes = [day_code_map[day] for day in needed_days]
+
+        existing_day_codes = SchoolDay.objects.values_list('day_name', flat=True)
+        for code in needed_day_codes:
+            if code not in existing_day_codes:
+                SchoolDay.objects.create(day_name=code)
+
+        school_days = SchoolDay.objects.filter(day_name__in=needed_day_codes).order_by('id')
+        classes = Class.objects.all()
+
+        if not classes.exists():
+            messages.error(request, "No classes found.")
+            return redirect('generate_timetable_with_ai')
+
+        if not school_days.exists():
+            messages.error(request, "No school days configured.")
+            return redirect('generate_timetable_with_ai')
+
+        # Step 4: Clear previous AI timetable
+        AITimetableEntry.objects.all().delete()
+
+        # Step 5: Build class-subject-teacher map
+        class_subject_teacher_map = defaultdict(dict)
+        for rel in Teacher_Subject_Class_Relation.objects.all():
+            for cls in rel.assigned_classes.all():
+                if rel.subject and rel.teacher:
+                    class_subject_teacher_map[cls.id][rel.subject.id] = rel.teacher
+
+        # Step 6: Create or fetch break subject
+        break_subject, _ = Subject.objects.get_or_create(name="Break")
+
+        # Step 7: Generate timetable for each class
+        base_time = datetime(2000, 1, 1, start_hour, start_minute)
+
+        for cls in classes:
+            class_teacher = cls.class_teacher
+            class_teacher_subject_id = None
+
+            if class_teacher and cls.id in class_subject_teacher_map:
+                for subject_id, teacher in class_subject_teacher_map[cls.id].items():
+                    if teacher == class_teacher:
+                        class_teacher_subject_id = subject_id
+                        break
+
+            subjects = list(class_subject_teacher_map[cls.id].keys()) if cls.id in class_subject_teacher_map else []
+            total_slots = days_per_week * periods_per_day
+            non_first_periods_per_day = periods_per_day - 1
+            total_non_first_period_slots = days_per_week * non_first_periods_per_day
+
+            subject_distribution = []
+            if subjects:
+                subject_distribution = (subjects * (total_non_first_period_slots // len(subjects))) + \
+                    random.sample(subjects, total_non_first_period_slots % len(subjects))
+                random.shuffle(subject_distribution)
+
+            subject_index = 0
+            daily_subject_limit = defaultdict(lambda: defaultdict(int))
+
+            for day in school_days:
+                for period in range(1, periods_per_day + 1):
+                    minutes_to_add = sum(
+                        period_duration + gap_minutes +
+                        (break_duration if p == break_after_period_1 or p == break_after_period_2 else 0)
+                        for p in range(1, period)
+                    )
+                    current_time = base_time + timedelta(minutes=minutes_to_add)
+                    start_time = current_time.time()
+                    end_time = (current_time + timedelta(minutes=period_duration)).time()
+
+                    if period == break_after_period_1 or period == break_after_period_2:
+                        AITimetableEntry.objects.create(
+                            class_assigned=cls,
+                            subject=break_subject,
+                            teacher=None,
+                            school_day=day,
+                            period_number=period,
+                            start_time=start_time,
+                            end_time=end_time
+                        )
+                        continue
+
+                    if period == 1 and class_teacher_subject_id:
+                        teacher = class_teacher
+                        AITimetableEntry.objects.create(
+                            class_assigned=cls,
+                            subject_id=class_teacher_subject_id,
+                            teacher=teacher,
+                            school_day=day,
+                            period_number=period,
+                            start_time=start_time,
+                            end_time=end_time
+                        )
+                        continue
+
+                    if not subject_distribution:
+                        continue
+
+                    subject_id = subject_distribution[subject_index]
+                    attempts = 0
+                    while daily_subject_limit[cls.id][(day.id, subject_id)] >= 1 and attempts < len(subjects):
+                        subject_index = (subject_index + 1) % len(subject_distribution)
+                        subject_id = subject_distribution[subject_index]
+                        attempts += 1
+
+                    teacher = class_subject_teacher_map[cls.id].get(subject_id)
+                    if not teacher:
+                        subject_index = (subject_index + 1) % len(subject_distribution)
+                        continue
+
+                    AITimetableEntry.objects.create(
+                        class_assigned=cls,
+                        subject_id=subject_id,
+                        teacher=teacher,
+                        school_day=day,
+                        period_number=period,
+                        start_time=start_time,
+                        end_time=end_time
+                    )
+                    daily_subject_limit[cls.id][(day.id, subject_id)] += 1
+                    subject_index = (subject_index + 1) % len(subject_distribution)
+
+        messages.success(request, "AI timetable generated for all classes successfully.")
+        return redirect('display_ai_timetable')
+
+    except Exception as e:
+        print(f"[ERROR] Exception occurred: {e}")
+        messages.error(request, f"Error generating timetable: {e}")
+        return redirect('generate_timetable_with_ai')
+
+
+from datetime import datetime
+from django.shortcuts import render, redirect
+from datetime import datetime
+from django.shortcuts import render, redirect
+
+
+import logging
+from datetime import datetime, timedelta
+from django.http import HttpResponse
+from django.shortcuts import redirect
+from .models import (
+    SchoolDay, AITimetableSettings, AITimetableEntry,
+    TeacherAttendance, Teacher_Subject_Class_Relation,
+    SubstituteAssignment, DailyTimeTableEntry
+)
+
+logger = logging.getLogger(__name__)
+
+def generate_daily_timetable_view(request):
+    if request.method != 'POST':
+        return HttpResponse("Invalid request method.", status=405)
+
+    try:
+        date_str = request.POST.get('date')
+        if not date_str:
+            return HttpResponse("Date is required.", status=400)
+
+        try:
+            date = datetime.strptime(date_str, "%Y-%m-%d").date()
+        except ValueError:
+            return HttpResponse("Invalid date format. Use YYYY-MM-DD.", status=400)
+
+        weekday = date.strftime("%a")
+
+        try:
+            school_day = SchoolDay.objects.get(day_name=weekday)
+        except SchoolDay.DoesNotExist:
+            return HttpResponse(f"No school day configured for {weekday}.", status=400)
+
+        settings = AITimetableSettings.objects.last()
+        if not settings:
+            return HttpResponse("AI Timetable Settings not configured.", status=400)
+
+        # Clear existing entries
+        DailyTimeTableEntry.objects.filter(date=date).delete()
+
+        timetable_entries = AITimetableEntry.objects.filter(school_day=school_day)
+
+        period_times = []
+        current_time = datetime.combine(date, datetime.min.time()).replace(
+            hour=settings.start_hour, minute=settings.start_minute
+        )
+
+        for i in range(1, settings.num_periods + 1):
+            start_time = current_time.time()
+            end_time = (current_time + timedelta(minutes=settings.period_duration)).time()
+            period_times.append((i, start_time, end_time))
+
+            current_time += timedelta(minutes=settings.period_duration)
+
+            if i in [settings.break_after_period_1, settings.break_after_period_2]:
+                current_time += timedelta(minutes=settings.break_duration)
+            else:
+                current_time += timedelta(minutes=settings.gap_between_periods)
+
+        period_time_map = {pnum: (start, end) for pnum, start, end in period_times}
+
+        for entry in timetable_entries:
+            assigned_teacher = entry.teacher
+            attendance = TeacherAttendance.objects.filter(teacher=assigned_teacher, date=date).first()
+            is_absent = attendance and attendance.status in ['absent', 'leave']
+
+            if is_absent:
+                substitute_relation = Teacher_Subject_Class_Relation.objects.filter(
+                    subject=entry.subject,
+                    assigned_classes=entry.class_assigned
+                ).exclude(teacher=assigned_teacher).first()
+
+                if substitute_relation:
+                    substitute_teacher = substitute_relation.teacher
+                    SubstituteAssignment.objects.create(
+                        original_teacher=assigned_teacher,
+                        substitute_teacher=substitute_teacher,
+                        date=date,
+                        subject=entry.subject,
+                        classroom=entry.class_assigned,
+                        period_number=entry.period_number
+                    )
+                    assigned_teacher = substitute_teacher
+                else:
+                    logger.warning(
+                        f"No substitute found for class {entry.class_assigned} subject {entry.subject} on {date}"
+                    )
+                    assigned_teacher = None
+
+            start_time, end_time = period_time_map.get(entry.period_number, (entry.start_time, entry.end_time))
+
+            DailyTimeTableEntry.objects.create(
+                classroom=entry.class_assigned,
+                subject=entry.subject,
+                teacher=assigned_teacher,
+                date=date,
+                period_number=entry.period_number,
+                start_time=start_time,
+                end_time=end_time
+            )
+
+        return redirect(f'/daily_timetable_view/?date={date}')
+
+    except Exception as e:
+        logger.error(f"Error generating daily timetable: {e}", exc_info=True)
+        return HttpResponse("Internal server error.", status=500)
+
+
+from .models import (
+    AITimetableEntry, AITimetableSettings, Class, TeacherAttendance, Teacher
+)
+
+from collections import defaultdict
+from django.shortcuts import render
+from .models import Class, AITimetableEntry, SchoolDay
+
+def display_ai_timetable(request):
+    selected_date = request.GET.get('date', date.today().isoformat())
+    today = date.today()
+    # Get all classes for dropdown
+    all_classes = Class.objects.all()
+    
+    class_id = request.GET.get('class_id')
+    class_obj = Class.objects.filter(id=class_id).first() if class_id else Class.objects.first()
+
+    if not class_obj:
+        return render(request, 'school_management/Timetable/AI_timetable_display.html', {
+            'error': 'No class found to display timetable.',
+            'all_classes': all_classes,
+        })
+
+    # Fetch timetable entries for selected class
+    entries = AITimetableEntry.objects.filter(class_assigned=class_obj)\
+        .select_related('subject', 'teacher', 'school_day')\
+        .order_by('school_day__id', 'period_number')
+
+    # All days in order
+    school_days = list(SchoolDay.objects.all().order_by('id'))
+
+    # Find max period number
+    max_period = 0
+    for e in entries:
+        if e.period_number > max_period:
+            max_period = e.period_number
+    max_periods = list(range(1, max_period + 1))
+
+    # Create period timings list of dicts (period number and formatted timing string)
+    period_timings = []
+    for period in max_periods:
+        sample_entry = next((e for e in entries if e.period_number == period), None)
+        if sample_entry:
+            timing_str = f"{sample_entry.start_time.strftime('%H:%M')} - {sample_entry.end_time.strftime('%H:%M')}"
+        else:
+            timing_str = "--:--"
+        period_timings.append({
+            'period': period,
+            'timing': timing_str,
+        })
+
+    # Build timetable lookup map (day_name, period_number) -> entry
+    timetable_map = {
+        (e.school_day.day_name, e.period_number): e for e in entries
+    }
+
+    # Build rows for each day
+    timetable_rows = []
+    for day in school_days:
+        row_entries = [
+            timetable_map.get((day.day_name, p), None)
+            for p in max_periods
+        ]
+        timetable_rows.append({
+            'day': day,
+            'entries': row_entries,
+        })
+
+    # Subject-wise period count (excluding "Break")
+    subject_hours = defaultdict(int)
+    for entry in entries:
+        if entry.subject and entry.subject.name.lower() != 'break':
+            subject_hours[entry.subject.name] += 1
+
+    # Create list for template
+    subject_summary = [
+        {'subject': subject, 'periods': count}
+        for subject, count in subject_hours.items()
+    ]
+
+    context = {
+        'all_classes': all_classes,
+        'class_obj': class_obj,
+        'period_timings': period_timings,
+        'timetable_rows': timetable_rows,
+        'subject_summary': subject_summary,
+          "selected_date": selected_date,
+        "today"  : today
+    }
+
+    return render(request, 'school_management/Timetable/AI_timetable_display.html', context)
+
+
+from datetime import datetime, timedelta
+from django.shortcuts import render, redirect
+import logging
+
+from .models import (
+    AITimetableEntry, DailyTimeTableEntry, TeacherAttendance,
+    SubstituteAssignment, SchoolDay, Teacher_Subject_Class_Relation,
+    AITimetableSettings
+)
+
+logger = logging.getLogger(__name__)
+
+import logging
+from datetime import datetime, timedelta
+from django.http import HttpResponse
+from django.shortcuts import redirect
+from django.views.decorators.http import require_POST
+from .models import (
+    AITimetableSettings,
+    SchoolDay,
+    AITimetableEntry,
+    DailyTimeTableEntry,
+    TeacherAttendance,
+    Teacher_Subject_Class_Relation,
+    SubstituteAssignment,
+)
+
+logger = logging.getLogger(__name__)
+
+@require_POST
+def generate_daily_timetable_view(request):
+    date_str = request.POST.get('date')
+    if not date_str:
+        return HttpResponse("Date is required.", status=400)
+
+    try:
+        date = datetime.strptime(date_str, "%Y-%m-%d").date()
+    except ValueError:
+        return HttpResponse("Invalid date format. Use YYYY-MM-DD.", status=400)
+
+    weekday = date.strftime("%a")
+
+    try:
+        school_day = SchoolDay.objects.get(day_name=weekday)
+    except SchoolDay.DoesNotExist:
+        return HttpResponse(f"No school day configured for {weekday}.", status=404)
+
+    settings = AITimetableSettings.objects.last()
+    if not settings:
+        return HttpResponse("AI Timetable Settings not configured.", status=500)
+
+    # Clear existing entries
+    DailyTimeTableEntry.objects.filter(date=date).delete()
+
+    timetable_entries = AITimetableEntry.objects.filter(school_day=school_day)
+
+    # Calculate start and end times for each period
+    period_times = []
+    current_time = datetime.combine(date, datetime.min.time()).replace(
+        hour=settings.start_hour, minute=settings.start_minute
+    )
+
+    for i in range(1, settings.num_periods + 1):
+        start_time = current_time.time()
+        end_time = (current_time + timedelta(minutes=settings.period_duration)).time()
+        period_times.append((i, start_time, end_time))
+
+        current_time += timedelta(minutes=settings.period_duration)
+
+        if i in [settings.break_after_period_1, settings.break_after_period_2]:
+            current_time += timedelta(minutes=settings.break_duration)
+        else:
+            current_time += timedelta(minutes=settings.gap_between_periods)
+
+    period_time_map = {pnum: (start, end) for pnum, start, end in period_times}
+
+    for entry in timetable_entries:
+        assigned_teacher = entry.teacher
+        attendance = TeacherAttendance.objects.filter(teacher=assigned_teacher, date=date).first()
+        is_absent = attendance and attendance.status in ['absent', 'leave']
+
+        if is_absent:
+            substitute_relation = Teacher_Subject_Class_Relation.objects.filter(
+                subject=entry.subject,
+                assigned_classes=entry.class_assigned
+            ).exclude(teacher=assigned_teacher).first()
+
+            if substitute_relation:
+                substitute_teacher = substitute_relation.teacher
+                SubstituteAssignment.objects.create(
+                    original_teacher=assigned_teacher,
+                    substitute_teacher=substitute_teacher,
+                    date=date,
+                    subject=entry.subject,
+                    classroom=entry.class_assigned,
+                    period_number=entry.period_number
+                )
+                assigned_teacher = substitute_teacher
+            else:
+                logger.warning(f"No substitute found for class {entry.class_assigned} subject {entry.subject} on {date}")
+                assigned_teacher = None
+
+        start_time, end_time = period_time_map.get(entry.period_number, (entry.start_time, entry.end_time))
+
+        DailyTimeTableEntry.objects.create(
+            classroom=entry.class_assigned,
+            subject=entry.subject,
+            teacher=assigned_teacher,
+            date=date,
+            period_number=entry.period_number,
+            start_time=start_time,
+            end_time=end_time
+        )
+
+    return redirect(f'/daily_timetable_view/?date={date}')
+
+from collections import defaultdict
+from datetime import date
+from django.shortcuts import render
+from .models import (
+    AITimetableEntry, TeacherAttendance, AITimetableSettings,
+    Class, Teacher, SubstituteAssignment
+)
+from django.http import HttpResponse
+from django.shortcuts import render
+from datetime import date
+from collections import defaultdict
+from .models import (
+    AITimetableEntry, TeacherAttendance, AITimetableSettings,
+    SubstituteAssignment, Class, Teacher
+)
+
+def daily_timetable_view(request):
+    selected_date_str = request.GET.get('date')
+    
+    try:
+        selected_date = date.fromisoformat(selected_date_str) if selected_date_str else date.today()
+    except ValueError:
+        return HttpResponse("Invalid date format. Please use YYYY-MM-DD.", status=400)
+
+    weekday_map = {
+        0: 'Mon', 1: 'Tue', 2: 'Wed', 3: 'Thu',
+        4: 'Fri', 5: 'Sat', 6: 'Sun'
+    }
+    weekday_short = weekday_map[selected_date.weekday()]
+
+    # Get timetable entries for the day
+    entries = AITimetableEntry.objects.filter(
+        school_day__day_name=weekday_short
+    ).select_related('class_assigned', 'subject', 'teacher')
+
+    absent_or_leave_teacher_ids = set(
+        TeacherAttendance.objects.filter(date=selected_date, status__in=['absent', 'leave'])
+        .values_list('teacher_id', flat=True)
+    )
+
+    try:
+        settings = AITimetableSettings.objects.latest('id')
+        break_periods = list(filter(None, [settings.break_after_period_1, settings.break_after_period_2]))
+        num_periods = settings.num_periods
+    except AITimetableSettings.DoesNotExist:
+        break_periods = [3, 6]
+        num_periods = 8
+
+    period_range = range(1, num_periods + 1)
+
+    timetable_matrix = defaultdict(dict)
+
+    for entry in entries:
+        class_name = entry.class_assigned.name
+        period = entry.period_number
+        subject_name = entry.subject.name if entry.subject else "N/A"
+        teacher = entry.teacher
+
+        if teacher is None:
+            teacher_display = "Not Assigned"
+        elif teacher.id in absent_or_leave_teacher_ids:
+            substitute = SubstituteAssignment.objects.filter(
+                original_teacher=teacher,
+                date=selected_date,
+                period_number=period,
+                subject=entry.subject,
+                classroom=entry.class_assigned
+            ).select_related('substitute_teacher').first()
+
+            if substitute and substitute.substitute_teacher:
+                teacher_display = f"{teacher.name} (Absent → {substitute.substitute_teacher.name})"
+            else:
+                teacher_display = f"{teacher.name} (Absent/Leave)"
+        else:
+            teacher_display = teacher.name
+
+        timetable_matrix[class_name][period] = f"{subject_name} / {teacher_display}"
+
+    all_class_objs = Class.objects.all()
+    for cls in all_class_objs:
+        if cls.name not in timetable_matrix:
+            timetable_matrix[cls.name] = {}
+
+    all_classes = sorted(timetable_matrix.keys())
+
+    table_rows = []
+    for class_name in all_classes:
+        row = [class_name]
+        for period in period_range:
+            if period in break_periods:
+                row.append("Break")
+            else:
+                row.append(timetable_matrix[class_name].get(period, "No Class"))
+        table_rows.append(row)
+
+    period_headers = [f"P{p}" for p in period_range]
+
+    all_teachers = Teacher.objects.all()
+    present_teachers = set(all_teachers.exclude(id__in=absent_or_leave_teacher_ids))
+
+    busy_teachers_by_period = defaultdict(set)
+    for entry in entries:
+        if entry.teacher and entry.teacher.id not in absent_or_leave_teacher_ids:
+            busy_teachers_by_period[entry.period_number].add(entry.teacher)
+
+    free_teachers_table = []
+    for period in period_range:
+        if period in break_periods:
+            free_teachers_table.append(("Break", []))
+        else:
+            busy_teachers = busy_teachers_by_period.get(period, set())
+            free_teachers = sorted(present_teachers - busy_teachers, key=lambda t: t.name)
+            free_teachers_table.append((f"P{period}", [t.name for t in free_teachers]))
+
+    context = {
+        "selected_date": selected_date,
+        "period_headers": period_headers,
+        "table_rows": table_rows,
+        "free_teachers_table": free_teachers_table,
+        "today": date.today(),
+    }
+
+    return render(request, 'school_management/Timetable/daily_timetable.html', context)
+
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from .models import Class, Teacher, Teacher_Subject_Class_Relation
+
+def assign_class_teachers_view(request):
+    classes = Class.objects.select_related('class_teacher').all()
+
+    # Build class-wise teacher lists
+    relations = Teacher_Subject_Class_Relation.objects.select_related('teacher').prefetch_related('assigned_classes')
+
+    class_teachers_dict = {}
+    for relation in relations:
+        if relation.teacher:
+            for cls in relation.assigned_classes.all():
+                class_teachers_dict.setdefault(cls.id, set()).add(relation.teacher)
+
+    class_teacher_data = []
+    for cls in classes:
+        teachers_for_class = sorted(
+            class_teachers_dict.get(cls.id, []),
+            key=lambda t: t.name
+        )
+        class_teacher_data.append({
+            'class': cls,
+            'teachers': teachers_for_class
+        })
+
+    if request.method == 'POST':
+        changes_made = False
+
+        for item in class_teacher_data:
+            cls = item['class']
+            teacher_id = request.POST.get(f'class_teacher_{cls.id}')
+            if teacher_id:
+                try:
+                    teacher_id = int(teacher_id)
+                    if cls.class_teacher_id != teacher_id:
+                        cls.class_teacher_id = teacher_id
+                        cls.save()
+                        changes_made = True
+                except ValueError:
+                    continue
+
+        if changes_made:
+            messages.success(request, "Class teachers assigned successfully.")
+        else:
+            messages.info(request, "No changes made.")
+
+        return redirect('assign_class_teachers')
+
+    return render(request, 'school_management/principal/class_teacher_assignment.html', {
+        'class_teacher_data': class_teacher_data
+    })
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from .models import Class, Teacher
+
+def assign_class_teachers(request):
+    # Get all classes and all teachers (or filter teachers if needed)
+    classes = Class.objects.all()
+    teachers = Teacher.objects.all()
+
+    # Prepare the data structure for template
+    class_teacher_data = []
+    for c in classes:
+        class_teacher_data.append({
+            'class': c,
+            'teachers': teachers,
+        })
+
+    if request.method == 'POST':
+        # Iterate over classes to update assigned teachers
+        for c in classes:
+            teacher_id = request.POST.get(f'class_teacher_{c.id}')
+            if teacher_id:
+                try:
+                    teacher = Teacher.objects.get(id=teacher_id)
+                except Teacher.DoesNotExist:
+                    teacher = None
+            else:
+                teacher = None
+            c.class_teacher = teacher
+            c.save()
+        messages.success(request, "Class teachers assigned successfully.")
+        return redirect('assign_class_teachers')
+
+    return render(request, 'school_management/principal/class_teacher_assignment.html', {
+        'class_teacher_data': class_teacher_data
+    })
+
+
+# views.py
+
+from django.shortcuts import render, redirect
+from django.utils.dateparse import parse_date
+from .models import Teacher, TeacherAttendance
+from datetime import date
+from datetime import date
+from django.shortcuts import render, redirect
+from .models import Teacher, TeacherAttendance
+
+def mark_teacher_attendance_view(request):
+    if request.method == 'POST':
+        selected_date = request.POST.get('date') or date.today().isoformat()
+
+        teachers = Teacher.objects.all()
+        for teacher in teachers:
+            status = request.POST.get(f'status_{teacher.id}', 'present')
+            reason = request.POST.get(f'reason_{teacher.id}', '').strip()
+
+            attendance, created = TeacherAttendance.objects.get_or_create(
+                teacher=teacher,
+                date=selected_date,
+                defaults={'status': status, 'reason': reason if status in ['absent', 'leave'] else ''}
+            )
+            if not created:
+                attendance.status = status
+                attendance.reason = reason if status in ['absent', 'leave'] else ''
+                attendance.save()
+
+        return redirect('mark_teacher_attendance')
+
+    else:
+        teachers = Teacher.objects.all()
+        today = date.today().isoformat()
+        # Get attendance for today or selected date (default to today)
+        today_attendance_qs = TeacherAttendance.objects.filter(date=today).select_related('teacher')
+        attendance_map = {att.teacher_id: att for att in today_attendance_qs}
+
+        # Prepare teacher data with attendance info for template
+        teacher_data = []
+        for teacher in teachers:
+            att = attendance_map.get(teacher.id)
+            teacher_data.append({
+                'teacher': teacher,
+                'status': att.status if att else 'present',
+                'reason': att.reason if att else '',
+            })
+
+        return render(request, 'school_management/Timetable/mark_teacher_attendance_manual.html', {
+            'teacher_data': teacher_data,
+            'selected_date': today,
+        })
+
+from django.shortcuts import render, redirect
+from django import forms
+from .models import SchoolProfile
+from django.contrib import messages
+
+from django.shortcuts import render
+from django.http import HttpResponse
+from .models import SchoolProfile
+
+def school_profile_view(request):
+    profile = SchoolProfile.objects.first()
+    if not profile:
+        profile = SchoolProfile.objects.create()  # Create default if none exists
+
+    if request.method == 'POST':
+        profile.name = request.POST.get('name', profile.name)
+        profile.address = request.POST.get('address', profile.address)
+        profile.phone_number = request.POST.get('phone_number', profile.phone_number)
+        profile.email = request.POST.get('email', profile.email)
+        profile.principal_name = request.POST.get('principal_name', profile.principal_name)
+
+        if request.FILES.get('logo'):
+            profile.logo = request.FILES['logo']
+
+        profile.save()
+        return HttpResponse("School profile updated successfully.")
+
+    return render(request, 'school_management/admin/school_profile.html', {'profile': profile})

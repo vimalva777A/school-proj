@@ -85,7 +85,7 @@ WSGI_APPLICATION = 'school_project.wsgi.application'
 #     }
 # }
 
-# Postrgre on loacl mechine
+# # Postrgre on loacl mechine
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql',
@@ -102,10 +102,10 @@ import logging
 
 logger = logging.getLogger('django')
 logger.setLevel(logging.DEBUG)
-import os
+
 
 # Database setup for render.com
-import os
+
 
 DATABASES = {
     'default': {

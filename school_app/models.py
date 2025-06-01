@@ -8,21 +8,7 @@ from django.db import models
 from django.utils import timezone
 from datetime import timedelta, date
 
-from datetime import date, timedelta
-from django.db import models
 
-from datetime import date, timedelta
-from django.db import models
-
-from datetime import timedelta, date
-from django.db import models
-from datetime import timedelta, date
-from django.db import models
-
-from datetime import date, timedelta
-
-from django.db import models
-from datetime import timedelta, date
 
 class AcademicYear(models.Model):
     name = models.CharField(max_length=50, help_text="e.g., 2024-2025")
@@ -92,6 +78,19 @@ class AcademicYear(models.Model):
         """Allows usage like `if some_date in academic_year:`"""
         return self.start_date <= check_date <= self.end_date
 
+from django.db import models
+
+class SchoolProfile(models.Model):
+    name = models.CharField(max_length=255)
+    address = models.TextField()
+    phone_number = models.CharField(max_length=20)
+    email = models.EmailField()
+    principal_name = models.CharField(max_length=255)
+    logo = models.ImageField(upload_to='school_logos/', blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
 class Holiday(models.Model):
     academic_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE)
     date = models.DateField()
@@ -138,13 +137,38 @@ class Subject(models.Model):
     def __str__(self):
         return self.name
     
+from django.db import models
+
 class Class(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    class_teacher = models.ForeignKey("Teacher", on_delete=models.SET_NULL, null=True, blank=True, related_name="teaching_classes")
-    syllabus = models.TextField(blank=True, null=True)
-    academic_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE, null=True, blank=True)
+    name = models.CharField("Class Name", max_length=100, unique=True)
+    class_teacher = models.ForeignKey(
+        "Teacher",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="teaching_classes",
+        help_text="Primary teacher responsible for this class"
+    )
+    syllabus = models.TextField(
+        "Syllabus Overview", blank=True, null=True,
+        help_text="Brief overview or topics covered"
+    )
+    academic_year = models.ForeignKey(
+        "AcademicYear",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        help_text="Academic year this class is associated with"
+    )
+
+    class Meta:
+        ordering = ['name']
+        verbose_name = "Class"
+        verbose_name_plural = "Classes"
+
     def __str__(self):
         return self.name
+
 
 class Exam(models.Model):
     name = models.CharField(max_length=100 , unique=True)
@@ -152,12 +176,12 @@ class Exam(models.Model):
     def __str__(self):
         return self.name
 
-class ExamDate(models.Model):
-    exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name="exam_dates")
-    date = models.DateField()
+# class ExamDate(models.Model):
+#     exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name="exam_dates")
+#     date = models.DateField()
 
-    def __str__(self):
-        return f"{self.exam.name} - {self.date}"
+#     def __str__(self):
+#         return f"{self.exam.name} - {self.date}"
 
 class ExamSchedule(models.Model):
     exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name="schedules")
@@ -207,6 +231,21 @@ class Teacher(models.Model):
     def __str__(self):
         return f"{self.name} - {self.login_id}"
 
+
+class TeacherAttendance(models.Model):
+    STATUS_CHOICES = [
+        ('present', 'Present'),
+        ('absent', 'Absent'),
+        ('leave', 'Leave'),
+    ]
+
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
+    date = models.DateField()
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='present')
+    reason = models.TextField(blank=True, null=True)
+
+    class Meta:
+        unique_together = ('teacher', 'date')
 
 class Teacher_Subject_Class_Relation(models.Model):
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, null=True, blank=True)  # ✅ Allow NULL
@@ -364,6 +403,10 @@ class Marks(models.Model):
 
     total_obtained_marks = models.FloatField(null=True, blank=True)  # Renamed from total_marks
     remarks = models.TextField(blank=True, null=True)  
+    
+    class Meta:
+        unique_together = ('student', 'exam', 'subject')  # ⛔ Prevent duplicates
+
     def __str__(self):
         return f"{self.student.name} - {self.subject.name}: {self.marks_obtained}/{self.total_obtained_marks}"
 
@@ -452,6 +495,80 @@ class MediaFile(models.Model):
     category = models.CharField(max_length=100)
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
+class SchoolDay(models.Model):
+    # For example: Monday, Tuesday, etc.
+    DAY_CHOICES = [
+        ('Mon', 'Monday'),
+        ('Tue', 'Tuesday'),
+        ('Wed', 'Wednesday'),
+        ('Thu', 'Thursday'),
+        ('Fri', 'Friday'),
+        ('Sat', 'Saturday'),
+        ('Sun', 'Sunday'),
+    ]
+    day_name = models.CharField(max_length=3, choices=DAY_CHOICES, unique=True)
 
-# models.py
+    def __str__(self):
+        return self.get_day_name_display()
+    
+class TransferredStudent(models.Model):
+    name = models.CharField(max_length=255)
+    parent_name = models.CharField(max_length=255)
+    parent_email = models.EmailField(null=True, blank=True)
+    student_class = models.CharField(max_length=100, null=True, blank=True)  # 
+    parent_phone = models.CharField(max_length=20)
+    marks_snapshot = models.JSONField()  # To store marks data
+    transferred_on = models.DateTimeField(auto_now_add=True)
+
+
+class AITimetableEntry(models.Model):
+    class_assigned = models.ForeignKey(Class, on_delete=models.CASCADE)
+    subject = models.ForeignKey('Subject', on_delete=models.CASCADE)
+    teacher = models.ForeignKey('Teacher', on_delete=models.CASCADE, null=True, blank=True)
+    school_day = models.ForeignKey(SchoolDay, on_delete=models.CASCADE)
+    period_number = models.PositiveSmallIntegerField()
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+
+    class Meta:
+        unique_together = ('class_assigned', 'school_day', 'period_number')
+        ordering = ['school_day', 'period_number']
+
+    def __str__(self):
+        return f"{self.class_assigned} - {self.subject} - {self.school_day} Period {self.period_number}"
+
+# Optional: Stores AI generation settings
+class AITimetableSettings(models.Model):
+    num_periods = models.PositiveIntegerField(default=8)
+    period_duration = models.PositiveIntegerField(help_text="In minutes")
+    gap_between_periods = models.PositiveIntegerField(help_text="In minutes", default=5)
+    break_after_period_1 = models.PositiveIntegerField(default=3)
+    break_after_period_2 = models.PositiveIntegerField(default=6)
+    break_duration = models.PositiveIntegerField(help_text="In minutes", default=15)
+    start_hour = models.PositiveIntegerField(default=8)
+    start_minute = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return f"AI Timetable Settings ({self.num_periods} periods, {self.period_duration} mins)"
+
+
+class DailyTimeTableEntry(models.Model):
+    date = models.DateField()
+    classroom = models.ForeignKey(Class, on_delete=models.CASCADE)
+    subject = models.ForeignKey('Subject', on_delete=models.CASCADE)
+    teacher = models.ForeignKey('Teacher', on_delete=models.SET_NULL, null=True, blank=True)
+    period_number = models.PositiveSmallIntegerField()
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+
+    class Meta:
+        unique_together = ('date', 'classroom', 'period_number')
+
+class SubstituteAssignment(models.Model):
+    date = models.DateField()
+    period_number = models.PositiveSmallIntegerField()
+    classroom = models.ForeignKey(Class, on_delete=models.CASCADE)
+    subject = models.ForeignKey('Subject', on_delete=models.CASCADE)
+    original_teacher = models.ForeignKey('Teacher', on_delete=models.CASCADE, related_name='original_assignments')
+    substitute_teacher = models.ForeignKey('Teacher', on_delete=models.CASCADE, related_name='substitute_assignments',null=True, blank=True)
 
