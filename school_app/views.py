@@ -11,10 +11,6 @@ from django.shortcuts import render, redirect
 from .models import MediaFile
 from django.http import HttpResponse
 from django.core.management import call_command
-from django.http import HttpResponse
-
-def home(request):
-    return HttpResponse("Welcome to School App!")
 
 def run_migrations(request):
     try:

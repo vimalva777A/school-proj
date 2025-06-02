@@ -3,8 +3,6 @@ from . import views
 from django.conf import settings
 from django.conf.urls.static import static
 urlpatterns=[
-
-    path('', views.home, name='home'),
     path('check-columns/', views.check_columns),
     path('run-migrations/', views.run_migrations), # https://school-proj.onrender.com/run-migrations/
     path('list-migrations/', views.list_migrations), #https://school-proj.onrender.com/list-migrations/
@@ -125,7 +123,7 @@ urlpatterns=[
 # student attendance 
     path('attendance_view', views.attendance_view, name='attendance_view'),
     path('attendance_list_view', views.attendance_list_view, name='attendance_list_view'),
-    path('student_assessment_report', views.student_assessment_report, name='student_assessment_report'), 
+    path('', views.student_assessment_report, name='student_assessment_report'), 
     path('student/<int:student_id>/', views.student_detail, name='student_detail'),
     path('student/<int:student_id>/internal-assessment/', views.student_internal_assessment, name='student_internal_assessment'),
     path('student/<int:student_id>/marksheet/', views.student_marksheet_view, name='student_marksheet'),
