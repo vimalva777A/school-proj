@@ -29,7 +29,7 @@ DEBUG = True
 
 import os
 
-ALLOWED_HOSTS = [os.environ.get("school-proj.onrender.com", "localhost",'127.0.0.1')]
+ALLOWED_HOSTS = [os.environ.get("school-proj.onrender.com", "localhost")]
 
 
 
