@@ -1,26 +1,21 @@
 services:
   - type: web
-    name: school_app # 🔁 Replace with your actual app name on Render
+    name: school_app
     runtime: python
-    buildCommand: |
-           
-            pip install -r requirements.txt
-            python manage.py collectstatic --noinput
-            python manage.py migrate --noinput
 
-    startCommand: gunicorn project_name.wsgi:application
-  # 🔁 Replace with your project name
+    buildCommand: |
+      pip install -r requirements.txt
+      python manage.py collectstatic --noinput
+      python manage.py migrate --noinput
+
+    startCommand: gunicorn school_project.wsgi:application --bind 0.0.0.0:$PORT
+
     envVars:
       - key: DATABASE_URL
         fromDatabase:
-          name: your-db-name   # 🔁 Replace with your Render Postgres database name
+          name: school_proj_db  # 🔁 Replace with your actual Postgres database name on Render
           property: connectionString
       - key: DEBUG
         value: "False"
-      - key: django-insecure-@478q=&v=w2$+zxl_(j)dhw8%gi@dyq___*z1l@jxi8-5t1h3=
+      - key: SECRET_KEY
         generateValue: true
-
-buildCommand: |
-  pip install -r requirements.txt
-  python manage.py migrate
-  python manage.py collectstatic --noinput
