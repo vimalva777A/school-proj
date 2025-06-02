@@ -25,11 +25,11 @@ SECRET_KEY = 'django-insecure-@478q=&v=w2$+zxl_(j)dhw8%gi@dyq___*z1l@jxi8-5t1h3=
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-# ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'school-proj.onrender.com']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'school-proj.onrender.com']
 
 import os
 
-ALLOWED_HOSTS = [os.environ.get("school-proj.onrender.com", "localhost")]
+# ALLOWED_HOSTS = [os.environ.get("school-proj.onrender.com", "localhost")]
 
 
 
