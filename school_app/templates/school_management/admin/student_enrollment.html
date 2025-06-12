@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Enrollment</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style>
+    body {
+      padding-top: 70px;
+      background-color: #f8f9fa;
+    }
+
+    .navbar {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 1030;
+    }
+
+    .custom-popup {
+      background: linear-gradient(45deg, #ff4b5c, #ffbb00, #00d4ff, #3bff00);
+      color: white;
+      padding: 15px;
+      border-radius: 10px;
+      font-size: 18px;
+      font-weight: bold;
+      text-align: center;
+      position: fixed;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1050;
+      display: none;
+      max-width: 90%;
+    }
+
+    .popup-note {
+      font-size: 14px;
+      font-weight: normal;
+      display: block;
+      margin-top: 5px;
+    }
+
+    .popup-ok {
+      margin-top: 10px;
+      padding: 5px 10px;
+      background: #fff;
+      color: black;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    @media (max-width: 768px) {
+      h2 {
+        font-size: 1.5rem;
+      }
+
+      .custom-popup {
+        font-size: 16px;
+        padding: 10px;
+      }
+
+      .form-label {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="#">School System</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+      <ul class="navbar-nav">
+        <li class="nav-item"><a class="nav-link active" href="{% url 'enroll_student' %}">Enroll Student</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'student_assessment_report' %}">Student List</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'class_creation_pg' %}">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'principal_dashboard' %}">Principal Dashboard</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- Main Container -->
+<div class="container mt-4">
+  <h2 class="text-center mb-4">Student Enrollment</h2>
+
+  <div id="message-container"></div>
+  <div id="custom-popup" class="custom-popup">
+    <span id="popup-message"></span>
+    <span class="popup-note">Please note down the Parent Login ID, Password, and Roll Number.</span>
+    <button class="popup-ok" onclick="$('#custom-popup').fadeOut();">OK</button>
+  </div>
+
+  <form id="student-enrollment-form" action="{% url 'enroll_student' %}" method="POST" class="p-4 shadow rounded bg-light">
+    {% csrf_token %}
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Student Full Name</label>
+        <input type="text" name="name" class="form-control" required>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Gender</label>
+        <select name="gender" class="form-control" required>
+          <option value="">-- Select Gender --</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Aadhar Number</label>
+        <input type="text" name="aadhar" class="form-control" required>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Permanent Education Number (PEN) (Optional)</label>
+        <input type="text" name="pen" class="form-control">
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Email (Optional)</label>
+        <input type="email" name="email" class="form-control">
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Phone Number (Optional)</label>
+        <input type="text" name="phone" class="form-control">
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Student Category</label>
+        <select name="category" class="form-control">
+          <option value="General">General</option>
+          <option value="OBC">OBC</option>
+          <option value="SC">SC</option>
+          <option value="ST">ST</option>
+          <option value="Others">Others</option>
+        </select>
+      </div>
+    </div>
+
+    <hr class="my-4" />
+    <h4>Parent Information</h4>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Parent Full Name</label>
+        <input type="text" name="parent_name" class="form-control" required>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Relation</label>
+        <select name="relation_type" class="form-control" required>
+          <option value="">-- Select --</option>
+          <option value="Father">Father</option>
+          <option value="Mother">Mother</option>
+          <option value="Local Guardian">Local Guardian</option>
+        </select>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Parent Contact Number</label>
+        <input type="text" name="parent_contact" class="form-control" required>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Parent Email (Optional)</label>
+        <input type="email" name="parent_email" class="form-control">
+      </div>
+
+      <div class="col-12">
+        <label class="form-label">Address</label>
+        <textarea name="address" class="form-control" rows="3" required></textarea>
+      </div>
+    </div>
+
+    <hr class="my-4" />
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Assign Class</label>
+        <select name="assigned_class" class="form-control" required>
+          {% for class in classes %}
+            <option value="{{ class.id }}">{{ class.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Select Academic Year</label>
+        <select name="academic_year" class="form-control" required>
+          {% for academic_year in academic_years %}
+            <option value="{{ academic_year.id }}">{{ academic_year.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-4 w-100">Enroll Student</button>
+  </form>
+</div>
+
+<!-- Scripts -->
+<script>
+  $(document).ready(function () {
+    $("#student-enrollment-form").submit(function (event) {
+      event.preventDefault();
+      let form = $(this);
+      let formData = form.serialize();
+
+      $.ajax({
+        url: form.attr("action"),
+        type: "POST",
+        data: formData,
+        headers: { "X-CSRFToken": "{{ csrf_token }}" },
+        dataType: "json",
+        success: function (response) {
+          let message = response.success + '<br>Roll Number: <b>' + response.roll_number +
+            '</b><br>Parent ID: <b>' + response.parent_id + '</b><br>Password: <b>' + response.password + '</b>';
+          $("#popup-message").html(message);
+          $("#custom-popup").fadeIn();
+          form[0].reset();
+          $("#message-container").html(""); // Clear previous errors
+        },
+        error: function (jqXHR) {
+          let errorMsg = jqXHR.responseJSON?.error || "An unexpected error occurred.";
+          $("#message-container").html('<div class="alert alert-danger text-center">' + errorMsg + '</div>');
+        }
+      });
+    });
+  });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

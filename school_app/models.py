@@ -78,7 +78,6 @@ class AcademicYear(models.Model):
         """Allows usage like `if some_date in academic_year:`"""
         return self.start_date <= check_date <= self.end_date
 
-from django.db import models
 
 class SchoolProfile(models.Model):
     name = models.CharField(max_length=255)
@@ -137,7 +136,7 @@ class Subject(models.Model):
     def __str__(self):
         return self.name
     
-from django.db import models
+
 
 class Class(models.Model):
     name = models.CharField("Class Name", max_length=100, unique=True)
@@ -343,7 +342,15 @@ from django.db import models
 
 
 class Parent(models.Model):
+
+    RELATION_CHOICES = [
+        ("Father", "Father"),
+        ("Mother", "Mother"),
+        ("Local Guardian", "Local Guardian"),
+    ]
+
     name = models.CharField(max_length=100)  # ✅ Add this field
+    relation_type = models.CharField(max_length=20, choices=RELATION_CHOICES, default="Father")  # ✅ NEW
     username = models.CharField(max_length=20, unique=True)
     password = models.CharField(max_length=128)  # Store hashed password
     phone = models.CharField(max_length=15, unique=False)
@@ -356,6 +363,10 @@ class Parent(models.Model):
 
 
 class Student(models.Model):
+    GENDER_CHOICES = [
+        ("Male", "Male"),
+        ("Female", "Female"),
+        ("Other", "Other"),]
     CATEGORY_CHOICES = [
         ("General", "General"),
         ("OBC", "OBC"),
@@ -364,10 +375,11 @@ class Student(models.Model):
         ("Others", "Others"),
     ]
     name = models.CharField(max_length=100)
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, default="Male") 
     aadhar = models.CharField(max_length=12, unique=True)
     pen = models.CharField(max_length=20, unique=True, blank=True, null=True)
     email = models.EmailField(blank=True, null=True, unique=True)
-    phone = models.CharField(max_length=15, unique=False)
+    phone = models.CharField(max_length=15, unique=False ,blank=True, null=True)
     parent = models.ForeignKey(Parent, on_delete=models.SET_NULL, null=True, blank=True, related_name="children")
     address = models.TextField()
     assigned_class = models.ForeignKey(Class, on_delete=models.CASCADE, related_name="students")
@@ -480,8 +492,6 @@ class StudentAttendance(models.Model):
     def __str__(self):
             return f"{self.student.name} - {self.date} - {self.status}"
     
-
-
 MEDIA_TYPE_CHOICES = (
     ('image', 'Image'),
     ('video', 'Video'),

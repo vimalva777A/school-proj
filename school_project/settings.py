@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    "sslserver",
     'school_app'
 ]
 
@@ -91,16 +92,16 @@ WSGI_APPLICATION = 'school_project.wsgi.application'
 # }
 
 # Postrgre on loacl mechine
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'school_db',     # Replace with your actual database name
-#         'USER': 'postgres',     # Replace with your PostgreSQL username
-#         'PASSWORD': '1234',  # Replace with your PostgreSQL password
-#         'HOST': 'localhost',              # Usually 'localhost' if you're running locally
-#         'PORT': '5432',                   # Default PostgreSQL port
-#     }
-# }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'school_db',     # Replace with your actual database name
+        'USER': 'postgres',     # Replace with your PostgreSQL username
+        'PASSWORD': '1234',  # Replace with your PostgreSQL password
+        'HOST': 'localhost',              # Usually 'localhost' if you're running locally
+        'PORT': '5432',                   # Default PostgreSQL port
+    }
+}
 import os
 from django.core.management.utils import get_random_secret_key
 import logging
@@ -111,19 +112,19 @@ logger.setLevel(logging.DEBUG)
 
 # Database setup for render.com
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'school_proj_db',
-        'USER': 'school_proj_db_user',
-        'PASSWORD': 'GZEhTz0ggm90ivUMspIoa0q5ZdjVVvjD',
-        'HOST': 'dpg-d0tubvs9c44c739uuik0-a.oregon-postgres.render.com',
-        'PORT': '5432',
-        'OPTIONS': {
-            'sslmode': 'require',
-        },
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'school_proj_db',
+#         'USER': 'school_proj_db_user',
+#         'PASSWORD': 'GZEhTz0ggm90ivUMspIoa0q5ZdjVVvjD',
+#         'HOST': 'dpg-d0tubvs9c44c739uuik0-a.oregon-postgres.render.com',
+#         'PORT': '5432',
+#         'OPTIONS': {
+#             'sslmode': 'require',
+#         },
+#     }
+# }
 
 
 

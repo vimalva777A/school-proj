@@ -76,6 +76,19 @@
         .button:hover {
             background-color: #0056b3;
         }
+
+        .delete-button {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .delete-button:hover {
+            background-color: #c82333;
+        }
     </style>
 </head>
 <body>
@@ -94,19 +107,20 @@
                 <tr>
                     <th>Name</th>
                     <th>Username</th>
-                    <th>Class</th> <!-- Added Class column -->
+                    <th>Class</th>
                     <th>Parent Email</th>
                     <th>Parent Phone</th>
                     <th>Transferred On</th>
                     <th>Marks Snapshot</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for student in students %}
-                <tr>
+                <tr id="student-row-{{ student.id }}">
                     <td>{{ student.name }}</td>
                     <td>{{ student.username }}</td>
-                    <td>{{ student.student_class|default:"N/A" }}</td> <!-- Display class here -->
+                    <td>{{ student.student_class|default:"N/A" }}</td>
                     <td>{{ student.parent_email|default:"N/A" }}</td>
                     <td>{{ student.parent_phone|default:"N/A" }}</td>
                     <td>{{ student.transferred_on|date:"Y-m-d H:i" }}</td>
@@ -117,17 +131,35 @@
                             No marks recorded
                         {% endif %}
                     </td>
+                    <td>
+                        <button class="delete-button" onclick="deleteStudent({{ student.id }})">Delete</button>
+                    </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="7">No transferred students found.</td>
+                    <td colspan="8">No transferred students found.</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
 
+        <!-- Hidden form for delete action -->
+        <form id="delete-form" method="post" style="display:none;">
+            {% csrf_token %}
+        </form>
+
         <a class="button" href="{% url 'principal_dashboard' %}">Back to Home</a>
     </div>
+
+    <script>
+        function deleteStudent(studentId) {
+            if (confirm("Are you sure you want to delete this student?")) {
+                const form = document.getElementById("delete-form");
+                form.action = `/students/transferred/delete/${studentId}/`;  // Your DELETE URL pattern
+                form.submit();
+            }
+        }
+    </script>
 
 </body>
 </html>

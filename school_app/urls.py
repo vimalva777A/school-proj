@@ -15,6 +15,8 @@ urlpatterns=[
     path('create_subject/', views.create_subject, name='create_subject'),
     path("create-sub-subject/", views.create_sub_subject, name="create_sub_subject"),
     path('media/delete/<int:media_id>/', views.delete_media, name='delete_media'),
+    path('students/transferred/delete/<int:student_id>/',views. delete_transferred_student, name='delete_transferred_student'),
+    path('student/<int:student_id>/edit/', views.edit_student_profile, name='edit_student_profile'),
 
     # timetable loading 
     path('get_teachers_by_class/<int:class_id>/', views.get_teachers_by_class, name='get_teachers_by_class'),
@@ -141,7 +143,7 @@ urlpatterns=[
     path('edit_event/<int:event_id>/', views.edit_event, name='edit_event'),
 
     path('contact_page', views.contact_page, name='contact_page'),
-    path('promote-students/',views. promote_students, name='promote_students'),
+    path('promote_students',views. promote_students, name='promote_students'),
     path('student/<int:student_id>/transfer/', views. transfer_student, name='transfer_student'),
     path("transferred_student_list", views.transferred_student_list, name="transferred_student_list"),
    
@@ -150,11 +152,19 @@ urlpatterns=[
      path('display_ai_timetable', views.display_ai_timetable, name='display_ai_timetable'),
      path('assign_class_teachers_view', views.assign_class_teachers_view, name='assign_class_teachers_view'),
      path('assign_class_teachers/', views.assign_class_teachers, name='assign_class_teachers'),
+     path('ai_teacher_timetable_view', views.ai_teacher_timetable_view, name='ai_teacher_timetable'),
+
      path('mark_teacher_attendance_view', views.mark_teacher_attendance_view, name='mark_teacher_attendance_view'),
      path('mark_teacher_attendance/', views.mark_teacher_attendance_view, name='mark_teacher_attendance'),
      path('generate_daily_timetable_view/', views.generate_daily_timetable_view, name='generate_daily_timetable_view'),
      path('daily_timetable_view/', views.daily_timetable_view, name='daily_timetable_view'),
-     path('school_profile_view/', views.school_profile_view, name='school_profile_view')
+     path('school_profile_view/', views.school_profile_view, name='school_profile_view'),
+     path('teacher_list_view', views.teacher_list_view, name='teacher_list_view'),
+
+     path('api/teachers/delete/<int:teacher_id>/', views.delete_teacher_api, name='delete_teacher_api'),
+    #  path('edit_periods/<int:class_id>/', views.edit_periods_and_generate_timetable, name='edit_periods_and_generate_timetable'),
+     path('regenerate_ai_timetable_with_new_periods/', views.regenerate_ai_timetable_with_new_periods, name='regenerate_ai_timetable_with_new_periods'),
+
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

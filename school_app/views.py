@@ -191,22 +191,7 @@ def delete_subject(request):
 
 
 
-from django.shortcuts import render, get_object_or_404
-from django.http import JsonResponse
-import json
-import re
-from .models import Student, Class
 
-def student_enrollment(request):
-    """Render the student enrollment form"""
-    classes = Class.objects.all()
-    return render(request, "school_management/student_enrollment.html", {"classes": classes})
-
-
-import random
-from django.contrib.auth.hashers import make_password
-from django.contrib import messages
-from django.shortcuts import render, redirect, get_object_or_404
 from .models import Parent, Student, Class
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
@@ -240,56 +225,91 @@ def student_enrollment(request):
     academic_years = AcademicYear.objects.order_by('-start_date')
     return render(
         request,
-        "school_management/student_enrollment.html",
+        "school_management/admin/student_enrollment.html",
         {"classes": classes, "academic_years": academic_years}
     )
 
 
-# Student enrollment handler
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.hashers import make_password
+import logging
+
+from .models import Class, AcademicYear, Parent, Student
+# from .utils import generate_parent_password, generate_parent_id  # Ensure you have these utility functions
+
+logger = logging.getLogger(__name__)
+
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.hashers import make_password
+from .models import Student, Parent, Class, AcademicYear
+import logging
+
+logger = logging.getLogger(__name__)
+
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.hashers import make_password
+import logging
+from .models import Student, Parent, AcademicYear
+
+logger = logging.getLogger(__name__)
+
+from django.db import IntegrityError
+
 def enroll_student(request):
     if request.method == "POST":
         try:
-            # Extract form data
+            # Extract student data
             name = request.POST.get("name", "").strip()
-            parent_name = request.POST.get("parent_name", "").strip()
-            phone = request.POST.get("phone", "").strip()
+            gender = request.POST.get("gender", "").strip()
             aadhar = request.POST.get("aadhar", "").strip()
+            pen = request.POST.get("pen", "").strip() or None
             email = request.POST.get("email", "").strip() or None
+            phone = request.POST.get("phone", "").strip()
             address = request.POST.get("address", "").strip()
             category = request.POST.get("category", "General").strip()
             class_id = request.POST.get("assigned_class")
             academic_year_id = request.POST.get("academic_year")
 
+            # Extract parent data
+            parent_name = request.POST.get("parent_name", "").strip()
+            relation_type = request.POST.get("relation_type", "").strip()
+            parent_contact = request.POST.get("parent_contact", "").strip()
+            parent_email = request.POST.get("parent_email", "").strip() or None
+
             # Validate required fields
-            if not all([name, parent_name, phone, class_id, aadhar, academic_year_id]):
+            if not all([name, aadhar, parent_name, parent_contact, class_id, academic_year_id, address]):
                 return JsonResponse({"error": "All required fields must be filled!"}, status=400)
 
-            # Validate existence of related records
             assigned_class = get_object_or_404(Class, id=class_id)
             academic_year = get_object_or_404(AcademicYear, id=academic_year_id)
 
-            # Generate login credentials for parent
+            # Create parent or get existing
             parent_password = generate_parent_password()
             parent_id = generate_parent_id()
 
-            # Create or fetch parent
             parent, created = Parent.objects.get_or_create(
-                phone=phone,
+                phone=parent_contact,
                 defaults={
                     "name": parent_name,
                     "username": parent_id,
                     "aadhar": aadhar,
-                    "email": email,
+                    "email": parent_email,
                     "address": address,
                     "password": make_password(parent_password)
                 }
             )
 
-            # Create student record
+            # Create student
             student = Student.objects.create(
                 name=name,
+                gender=gender,
                 phone=phone,
                 aadhar=aadhar,
+                pen=pen,
                 email=email,
                 address=address,
                 assigned_class=assigned_class,
@@ -305,16 +325,109 @@ def enroll_student(request):
                 "password": parent_password if created else "Already registered"
             })
 
+        except IntegrityError as e:
+            if "aadhar" in str(e).lower():
+                return JsonResponse({"error": "Aadhar number already exists!"}, status=400)
+            elif "pen" in str(e).lower():
+                return JsonResponse({"error": "PEN already exists!"}, status=400)
+            return JsonResponse({"error": "Unique constraint failed!"}, status=400)
+
         except Exception as e:
             logger.error(f"Error enrolling student: {str(e)}", exc_info=True)
-            return JsonResponse({"error": "Something went wrong. Please check input data or database setup."}, status=500)
+            return JsonResponse({
+                "error": "Something went wrong. Please check input data or database setup."
+            }, status=500)
 
     return JsonResponse({"error": "Invalid request method!"}, status=405)
 
-from django.shortcuts import render
-from .models import Class, Subject, Teacher_Subject_Class_Relation
-
 from .models import Class, Subject, Teacher_Subject_Class_Relation, ClassSubSubjectAssignment
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Student
+
+from django.shortcuts import render, get_object_or_404, redirect
+from django.db import IntegrityError
+from django.contrib import messages
+from .models import Student, Parent, Class, AcademicYear
+
+def edit_student_profile(request, student_id):
+    student = get_object_or_404(Student, id=student_id)
+    parent = student.parent
+    classes = Class.objects.all()
+    academic_years = AcademicYear.objects.all()
+
+    gender_choices = [choice[0] for choice in Student.GENDER_CHOICES]
+    category_choices = [choice[0] for choice in Student.CATEGORY_CHOICES]
+    relation_choices = [choice[0] for choice in Parent.RELATION_CHOICES]
+
+    if request.method == 'POST':
+        # Update student fields
+        student.name = request.POST.get('name')
+        student.gender = request.POST.get('gender')
+        student.aadhar = request.POST.get('aadhar')
+
+        pen = request.POST.get('pen', '').strip()
+        student.pen = pen if pen else None  # Avoid empty string uniqueness conflict
+
+        student.email = request.POST.get('email')
+        student.phone = request.POST.get('phone')
+        student.category = request.POST.get('category')
+        student.address = request.POST.get('address')
+
+        assigned_class_id = request.POST.get('assigned_class')
+        if assigned_class_id:
+            student.assigned_class = get_object_or_404(Class, id=assigned_class_id)
+
+        academic_year_id = request.POST.get('academic_year')
+        if academic_year_id:
+            student.academic_year = get_object_or_404(AcademicYear, id=academic_year_id)
+
+        try:
+            # Only update existing parent info; do not touch username/password
+            if parent:
+                parent.name = request.POST.get('parent_name')
+                parent.relation_type = request.POST.get('relation_type')
+                parent.phone = request.POST.get('parent_contact')
+                parent.email = request.POST.get('parent_email')
+                parent.address = request.POST.get('address')
+                parent.save()
+            else:
+                # Only create parent if not already present
+                base_username = f"parent_{student.id}"
+                username = generate_unique_parent_username(base_username)
+                raw_password = generate_random_password()
+
+                parent = Parent.objects.create(
+                    name=request.POST.get('parent_name'),
+                    relation_type=request.POST.get('relation_type'),
+                    phone=request.POST.get('parent_contact'),
+                    email=request.POST.get('parent_email'),
+                    address=request.POST.get('address'),
+                    username=username,
+                    password=raw_password,
+                    aadhar=f"{student.aadhar}P"
+                )
+                student.parent = parent
+
+            student.save()
+            messages.success(request, "Student profile updated successfully.")
+            return redirect('student_assessment_report')
+
+        except IntegrityError as e:
+            messages.error(request, f"Error: {str(e)}")
+            # Fall through to re-render form with error
+
+    return render(request, 'school_management/admin/edit_student_profile.html', {
+        'student': student,
+        'parent': parent,
+        'classes': classes,
+        'academic_years': academic_years,
+        'edit_mode': True,
+        'gender_options': gender_choices,
+        'category_options': category_choices,
+        'relation_options': relation_choices,
+    })
+
+
 def teacher_enrollment_pg(request):
     subjects = Subject.objects.all()
     classes = Class.objects.all()
@@ -341,7 +454,7 @@ def teacher_enrollment_pg(request):
 
     return render(
         request, 
-        "school_management/teacher_enrollment.html", 
+        "school_management/admin/teacher_enrollment.html", 
         {
             "subjects": subjects, 
             "classes": classes, 
@@ -369,48 +482,57 @@ def delete_class_subj_Tr(request):
     return JsonResponse({"status": "error", "message": "Invalid request"})
 
 
+from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.http import require_POST
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
+from django.db import IntegrityError, transaction
 from .models import Teacher, Subject, Class, Teacher_Subject_Class_Relation
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from .models import Teacher, Subject, Class, Teacher_Subject_Class_Relation
-from django.db.utils import IntegrityError
 
-@csrf_exempt  # Remove this in production
+@csrf_protect
+@require_POST
 def enroll_teacher(request):
-    if request.method == "POST":
-        name = request.POST.get("name")
-        phone_number = request.POST.get("phone_number")
-        subject_ids = request.POST.getlist("subjects")
-        class_ids = request.POST.getlist("assigned_classes")
+    name = request.POST.get("name", "").strip()
+    phone_number = request.POST.get("phone_number", "").strip()
+    subject_ids = request.POST.getlist("subjects")
+    class_ids = request.POST.getlist("assigned_classes")
 
-        if not name or not phone_number or not subject_ids or not class_ids:
-            return JsonResponse({"status": "error", "message": "Missing required fields"}, status=400)
+    # Validate required fields
+    if not name or not phone_number or not subject_ids or not class_ids:
+        return JsonResponse({"status": "error", "message": "Missing required fields"}, status=400)
 
-        try:
-            # ✅ Ensure the phone number is unique
+    try:
+        with transaction.atomic():
+            # Ensure phone number is unique
+            if Teacher.objects.filter(phone=phone_number).exists():
+                return JsonResponse({"status": "error", "message": "Phone number already exists!"}, status=400)
+
+            # Create teacher
             teacher = Teacher.objects.create(name=name, phone=phone_number)
 
-            for subject_id in subject_ids:
-                subject = Subject.objects.get(id=subject_id)
+            # Validate subjects and classes
+            subjects = Subject.objects.filter(id__in=subject_ids)
+            classes = Class.objects.filter(id__in=class_ids)
 
+            if len(subjects) != len(subject_ids):
+                return JsonResponse({"status": "error", "message": "Invalid subject selection."}, status=400)
+            if len(classes) != len(class_ids):
+                return JsonResponse({"status": "error", "message": "Invalid class selection."}, status=400)
+
+            # Create mappings
+            for subject in subjects:
                 relation = Teacher_Subject_Class_Relation.objects.create(
                     teacher=teacher,
                     subject=subject
                 )
-                relation.assigned_classes.set(Class.objects.filter(id__in=class_ids))
-                relation.save()
+                relation.assigned_classes.set(classes)
 
-            return JsonResponse({"status": "success", "message": "Teacher enrolled successfully"})
+        return JsonResponse({"status": "success", "message": "Teacher enrolled successfully"})
 
-        except IntegrityError:
-            return JsonResponse({"status": "error", "message": "Phone number already exists!"}, status=400)
+    except IntegrityError:
+        return JsonResponse({"status": "error", "message": "Database integrity error occurred."}, status=400)
 
-        except Exception as e:
-            return JsonResponse({"status": "error", "message": str(e)}, status=500)
-
-    return JsonResponse({"status": "error", "message": "Invalid request method"}, status=405)
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
 from django.http import JsonResponse
 from .models import Class, Subject, Teacher_Subject_Class_Relation
@@ -2046,7 +2168,7 @@ def principal_dashboard(request):
         event_end_dates = [event.end_date.strftime("%Y-%m-%d") for event in events]
         event_ids = [event.id for event in events]  # ✅ Include event IDs here
 
-    return render(request, "school_management/principal_dashboard.html", {
+    return render(request, "school_management/principal/principal_dashboard.html", {
         "event_labels": json.dumps(event_labels),
         "event_start_dates": json.dumps(event_start_dates),
         "event_end_dates": json.dumps(event_end_dates),
@@ -3310,14 +3432,14 @@ from .models import InternalAssessment, Marks, StudentAttendance
 from django.db.models import F
 
 
-
-
-from django.db.models import Sum, F, FloatField, ExpressionWrapper
-from .models import Marks, Student
+from django.shortcuts import render
+from .models import Student, Marks, ExamSchedule, Class
 
 def student_assessment_report(request):
     class_id = request.GET.get('class_id')
     search_name = request.GET.get('search_name', '')
+    percentage_filter_min = request.GET.get('percentage_filter_min', '')
+    percentage_filter_max = request.GET.get('percentage_filter_max', '')
 
     students = Student.objects.all()
     if class_id:
@@ -3325,18 +3447,25 @@ def student_assessment_report(request):
     if search_name:
         students = students.filter(name__icontains=search_name)
 
+    try:
+        min_percentage = float(percentage_filter_min) if percentage_filter_min else None
+    except (TypeError, ValueError):
+        min_percentage = None
+
+    try:
+        max_percentage = float(percentage_filter_max) if percentage_filter_max else None
+    except (TypeError, ValueError):
+        max_percentage = None
+
     assessments = []
 
-    for student in students:
+    for student in students.select_related('assigned_class'):
         student_marks = Marks.objects.filter(student=student)
-
         total_obtained = 0
         total_possible = 0
 
         for mark in student_marks:
-            total_obtained += mark.marks_obtained or 0  # handle None
-
-            # Get the corresponding exam schedule for this subject and class
+            total_obtained += mark.marks_obtained or 0  # Handle None marks
             try:
                 schedule = ExamSchedule.objects.get(
                     exam=mark.exam,
@@ -3345,16 +3474,24 @@ def student_assessment_report(request):
                 )
                 total_possible += schedule.total_marks
             except ExamSchedule.DoesNotExist:
-                continue  # Skip if no schedule found
+                continue
 
         if total_possible > 0:
             average_percentage = (total_obtained / total_possible) * 100
         else:
             average_percentage = 0
 
+        rounded_percentage = round(average_percentage, 2)
+
+        # Apply filters
+        if min_percentage is not None and rounded_percentage < min_percentage:
+            continue
+        if max_percentage is not None and rounded_percentage > max_percentage:
+            continue
+
         assessments.append({
             'student': student,
-            'average_percentage': round(average_percentage, 2),
+            'percentage': rounded_percentage,
         })
 
     context = {
@@ -3362,51 +3499,32 @@ def student_assessment_report(request):
         'classes': Class.objects.all(),
         'selected_class': class_id,
         'search_name': search_name,
+        'percentage_filter_min': percentage_filter_min,
+        'percentage_filter_max': percentage_filter_max,
     }
 
     return render(request, 'school_management/students/student_assessment_ui.html', context)
 
-from django.shortcuts import get_object_or_404, render
-from .models import Student, StudentAttendance, Exam, Marks, ExamSchedule, StudentSubjectRemark
-from django.db.models import Count
-from django.shortcuts import render, get_object_or_404
-from .models import Student, StudentAttendance, Exam, Marks, ExamSchedule, StudentSubjectRemark
-from django.db.models import Count
-from django.shortcuts import get_object_or_404, render
-from django.shortcuts import get_object_or_404, render
-from django.db.models import Count
-from datetime import date
-from django.shortcuts import render, get_object_or_404
-from django.db.models import Count, Q
-from .models import Student, StudentAttendance, Exam, Marks, ExamSchedule, StudentSubjectRemark
 
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Count, Q
 from .models import Student, StudentAttendance, Exam, Marks, ExamSchedule, StudentSubjectRemark
+from .models import SchoolProfile
 
-from django.shortcuts import render, get_object_or_404
-from django.db.models import Count, Q
-from .models import Student, StudentAttendance, Marks, Exam, ExamSchedule, StudentSubjectRemark, AcademicYear
-from django.shortcuts import render, get_object_or_404
-from django.db.models import Count, Q
-from datetime import date
-from .models import (
-    Student, StudentAttendance, Exam, Marks,
-    ExamSchedule, StudentSubjectRemark, AcademicYear
-)
 
 def student_detail(request, student_id):
-    # Fetch student with related parent, class, and academic year
+    # === Fetch student with related data ===
+    school_profile = SchoolProfile.objects.first()  # Assuming a single profile exists
+
     student = get_object_or_404(
         Student.objects.select_related('parent', 'assigned_class', 'academic_year'),
         id=student_id
     )
-    
     parent = student.parent
     class_name = student.assigned_class.name
     academic_year = student.academic_year
 
-    # === Attendance Statistics ===
+    # === Attendance Summary ===
     attendance_stats = StudentAttendance.objects.filter(student=student).aggregate(
         total_present=Count('status', filter=Q(status='Present')),
         total_absent=Count('status', filter=Q(status='Absent')),
@@ -3422,22 +3540,27 @@ def student_detail(request, student_id):
     total_working_days = academic_year.working_days_upto_today()
     attendance_percentage = round((total_present / total_working_days) * 100, 2) if total_working_days else 0
 
-    # === Exam Selection ===
+    # === Exam Selection from GET ===
     selected_exam_id = request.GET.get('exam')
-    exams = Exam.objects.all().order_by('-id')  # For exam dropdown
+    exams = Exam.objects.all().order_by('-id')
 
-    # === Marks and Exam Schedules ===
+    # === Marks Retrieval ===
     marks_records = Marks.objects.filter(student=student).select_related('subject')
     if selected_exam_id:
         marks_records = marks_records.filter(exam_id=selected_exam_id)
 
-    exam_schedules = ExamSchedule.objects.filter(
-        school_class=student.assigned_class,
-        exam_id=selected_exam_id
-    ) if selected_exam_id else []
+    # === Exam Schedule Mapping ===
+    if selected_exam_id:
+        exam_schedules = ExamSchedule.objects.filter(
+            school_class=student.assigned_class,
+            exam_id=selected_exam_id
+        )
+    else:
+        exam_schedules = []
 
     schedule_dict = {s.subject.id: s for s in exam_schedules}
-    
+
+    # === Remarks Mapping ===
     remarks = StudentSubjectRemark.objects.filter(student=student)
     if selected_exam_id:
         remarks = remarks.filter(exam_id=selected_exam_id)
@@ -3449,14 +3572,15 @@ def student_detail(request, student_id):
     total_max_marks = 0
 
     for mark in marks_records:
-        subject_id = mark.subject.id
+        subject = mark.subject
+        subject_id = subject.id
         schedule = schedule_dict.get(subject_id)
         total_marks = schedule.total_marks if schedule else 0
         obtained = mark.marks_obtained
         percentage = round((obtained / total_marks) * 100, 2) if total_marks > 0 else 0
 
         marks_data[subject_id] = {
-            'subject': mark.subject,
+            'subject': subject,
             'marks_obtained': obtained,
             'total_marks': total_marks,
             'percentage': percentage,
@@ -3466,10 +3590,12 @@ def student_detail(request, student_id):
         total_marks_obtained += obtained
         total_max_marks += total_marks
 
-    overall_percentage = round((total_marks_obtained / total_max_marks) * 100, 2) if total_max_marks > 0 else 0
+    # === Final Overall Percentage ===
+    overall_percentage = round((total_marks_obtained / total_max_marks) * 100, 2) if total_max_marks else 0
 
-    # === Context for Template ===
+    # === Context for Rendering ===
     context = {
+        'school_profile': school_profile,
         'student': student,
         'parent': parent,
         'class_name': class_name,
@@ -3491,23 +3617,13 @@ def student_detail(request, student_id):
     }
 
     return render(request, 'school_management/students/student_detail.html', context)
-from django.shortcuts import render, get_object_or_404
-from .models import Student, Exam, Marks, ExamSchedule, StudentSubjectRemark
-from django.shortcuts import render, get_object_or_404
-from .models import Student, Exam, Marks, ExamSchedule, StudentSubjectRemark, SchoolProfile
-from django.shortcuts import render, get_object_or_404
-from .models import Student, Exam, Marks, ExamSchedule, StudentSubjectRemark, SchoolProfile
-from django.shortcuts import render, get_object_or_404
-from .models import (
-    Student, Exam, Marks, ExamSchedule, StudentSubjectRemark,
-    SchoolProfile
-)
+
 
 from django.shortcuts import get_object_or_404, render
 from .models import Student, SchoolProfile, Exam, Marks, ExamSchedule, StudentSubjectRemark, Class
 
 def student_marksheet_view(request, student_id):
-    # Fetch student with related info (including assigned_class)
+    # Fetch student with related info (including assigned_class
     student = get_object_or_404(
         Student.objects.select_related('parent', 'assigned_class', 'academic_year'),
         id=student_id
@@ -3688,15 +3804,7 @@ def student_internal_assessment(request, student_id):
     return render(request, "school_management/internal_assessment_report.html", context)
 
 
-from .models import (
-    Class,
-    Student,
-    Subject,
-    Teacher_Subject_Class_Relation,
-    SkillOrDevelopmentArea,
-    SyllabusPerformance,
-    SoftSkillPerformance,
-)
+
 from django.shortcuts import render, redirect
 from .models import (
     Class,
@@ -4093,7 +4201,7 @@ from .models import TransferredStudent,AITimetableEntry
 
 def transferred_student_list(request):
     students = TransferredStudent.objects.all().order_by('-transferred_on')
-    return render(request, 'school_management/transferred_student_list.html', {'students': students})
+    return render(request, 'school_management/admin/transferred_student_list.html', {'students': students})
 
 
 def ai_timetable_setup_pg(request):
@@ -4109,21 +4217,8 @@ from django.contrib import messages
 
 
 
-from django.shortcuts import redirect
-from django.http import HttpResponseNotAllowed
-from django.contrib import messages
-from collections import defaultdict
-from datetime import datetime, timedelta
-import random
 
-from school_app.models import (
-    Class, SchoolDay, AITimetableEntry,
-    Subject, Teacher_Subject_Class_Relation
-)
 
-from collections import defaultdict
-from datetime import datetime, timedelta
-import random
 
 from datetime import datetime, timedelta
 from collections import defaultdict
@@ -4142,14 +4237,25 @@ from .models import (
     Subject
 )
 
+from datetime import datetime, timedelta
+from collections import defaultdict
+import random
+from django.shortcuts import redirect
+from django.http import HttpResponseNotAllowed
+from django.contrib import messages
+from .models import (
+    AITimetableSettings, AITimetableEntry, SchoolDay,
+    Class, Subject, Teacher_Subject_Class_Relation
+)
+
 def generate_timetable_with_ai(request):
     if request.method != 'POST':
         return HttpResponseNotAllowed(['POST'])
 
     try:
-        # Step 1: Fetch AI timetable settings from form input
+        # === Step 1: Fetch settings from POST data ===
         periods_per_day = int(request.POST.get('num_periods', 8))
-        days_per_week = 6  # Monday to Saturday
+        days_per_week = 6  # Fixed: Monday to Saturday
 
         start_hour = int(request.POST.get('start_hour', 8))
         start_minute = int(request.POST.get('start_minute', 0))
@@ -4159,8 +4265,8 @@ def generate_timetable_with_ai(request):
         break_after_period_2 = int(request.POST.get('break_after_period_2', 6))
         break_duration = int(request.POST.get('break_duration', 15))
 
-        # Step 2: Store or update AI settings in the database
-        AITimetableSettings.objects.all().delete()  # Ensure only one setting
+        # === Step 2: Save AI timetable settings ===
+        AITimetableSettings.objects.all().delete()
         AITimetableSettings.objects.create(
             num_periods=periods_per_day,
             period_duration=period_duration,
@@ -4172,7 +4278,7 @@ def generate_timetable_with_ai(request):
             start_minute=start_minute,
         )
 
-        # Step 3: Setup required school days
+        # === Step 3: Ensure required school days exist ===
         day_code_map = {
             'Monday': 'Mon', 'Tuesday': 'Tue', 'Wednesday': 'Wed',
             'Thursday': 'Thu', 'Friday': 'Fri', 'Saturday': 'Sat'
@@ -4191,25 +4297,24 @@ def generate_timetable_with_ai(request):
         if not classes.exists():
             messages.error(request, "No classes found.")
             return redirect('generate_timetable_with_ai')
-
         if not school_days.exists():
             messages.error(request, "No school days configured.")
             return redirect('generate_timetable_with_ai')
 
-        # Step 4: Clear previous AI timetable
+        # === Step 4: Clear old AI-generated timetable ===
         AITimetableEntry.objects.all().delete()
 
-        # Step 5: Build class-subject-teacher map
+        # === Step 5: Build class-subject-teacher mapping ===
         class_subject_teacher_map = defaultdict(dict)
         for rel in Teacher_Subject_Class_Relation.objects.all():
             for cls in rel.assigned_classes.all():
                 if rel.subject and rel.teacher:
                     class_subject_teacher_map[cls.id][rel.subject.id] = rel.teacher
 
-        # Step 6: Create or fetch break subject
+        # === Step 6: Get or create Break subject ===
         break_subject, _ = Subject.objects.get_or_create(name="Break")
 
-        # Step 7: Generate timetable for each class
+        # === Step 7: Generate timetable ===
         base_time = datetime(2000, 1, 1, start_hour, start_minute)
 
         for cls in classes:
@@ -4223,21 +4328,20 @@ def generate_timetable_with_ai(request):
                         break
 
             subjects = list(class_subject_teacher_map[cls.id].keys()) if cls.id in class_subject_teacher_map else []
-            total_slots = days_per_week * periods_per_day
-            non_first_periods_per_day = periods_per_day - 1
-            total_non_first_period_slots = days_per_week * non_first_periods_per_day
+            if not subjects:
+                continue
 
-            subject_distribution = []
-            if subjects:
-                subject_distribution = (subjects * (total_non_first_period_slots // len(subjects))) + \
-                    random.sample(subjects, total_non_first_period_slots % len(subjects))
-                random.shuffle(subject_distribution)
+            total_non_first_periods = days_per_week * (periods_per_day - 1)
+            subject_distribution = (subjects * (total_non_first_periods // len(subjects))) + \
+                                   random.sample(subjects, total_non_first_periods % len(subjects))
+            random.shuffle(subject_distribution)
 
             subject_index = 0
-            daily_subject_limit = defaultdict(lambda: defaultdict(int))
+            daily_subject_limit = defaultdict(lambda: defaultdict(int))  # {class_id: {(day_id, subject_id): count}}
 
             for day in school_days:
                 for period in range(1, periods_per_day + 1):
+                    # === Calculate period time ===
                     minutes_to_add = sum(
                         period_duration + gap_minutes +
                         (break_duration if p == break_after_period_1 or p == break_after_period_2 else 0)
@@ -4247,7 +4351,8 @@ def generate_timetable_with_ai(request):
                     start_time = current_time.time()
                     end_time = (current_time + timedelta(minutes=period_duration)).time()
 
-                    if period == break_after_period_1 or period == break_after_period_2:
+                    # === Handle break periods ===
+                    if period in (break_after_period_1, break_after_period_2):
                         AITimetableEntry.objects.create(
                             class_assigned=cls,
                             subject=break_subject,
@@ -4259,12 +4364,12 @@ def generate_timetable_with_ai(request):
                         )
                         continue
 
+                    # === Assign class teacher subject for first period ===
                     if period == 1 and class_teacher_subject_id:
-                        teacher = class_teacher
                         AITimetableEntry.objects.create(
                             class_assigned=cls,
                             subject_id=class_teacher_subject_id,
-                            teacher=teacher,
+                            teacher=class_teacher,
                             school_day=day,
                             period_number=period,
                             start_time=start_time,
@@ -4272,11 +4377,13 @@ def generate_timetable_with_ai(request):
                         )
                         continue
 
+                    # === Assign other subjects ===
                     if not subject_distribution:
                         continue
 
-                    subject_id = subject_distribution[subject_index]
                     attempts = 0
+                    subject_id = subject_distribution[subject_index]
+
                     while daily_subject_limit[cls.id][(day.id, subject_id)] >= 1 and attempts < len(subjects):
                         subject_index = (subject_index + 1) % len(subject_distribution)
                         subject_id = subject_distribution[subject_index]
@@ -4308,11 +4415,62 @@ def generate_timetable_with_ai(request):
         return redirect('generate_timetable_with_ai')
 
 
-from datetime import datetime
-from django.shortcuts import render, redirect
-from datetime import datetime
-from django.shortcuts import render, redirect
 
+
+
+
+
+from django.shortcuts import render, get_object_or_404
+from .models import AITimetableEntry, Teacher, AITimetableSettings, SchoolDay
+
+import json
+from django.core.serializers.json import DjangoJSONEncoder
+from django.shortcuts import render
+from django.core.serializers.json import DjangoJSONEncoder
+from .models import Teacher, SchoolDay, AITimetableSettings, AITimetableEntry
+import json
+
+def ai_teacher_timetable_view(request):
+    # Fetch configuration
+    timetable_settings = AITimetableSettings.objects.first()
+    periods_per_day = timetable_settings.num_periods if timetable_settings else 8
+
+    # Fetch teachers and school days
+    teachers = Teacher.objects.all()
+    school_days = SchoolDay.objects.order_by('id')  # Ensure consistent day ordering
+
+    # Initialize empty timetable data structure
+    timetable_data = {
+        teacher.id: {
+            'name': teacher.name,
+            'timetable': {day.day_name: ['' for _ in range(periods_per_day)] for day in school_days}
+        }
+        for teacher in teachers
+    }
+
+    # Fill timetable entries
+    entries = AITimetableEntry.objects.select_related('teacher', 'subject', 'class_assigned', 'school_day')
+    for entry in entries:
+        if not entry.teacher:
+            continue
+
+        teacher_id = entry.teacher.id
+        day_name = entry.school_day.day_name
+        period_idx = entry.period_number - 1  # 0-based index
+
+        if teacher_id in timetable_data and day_name in timetable_data[teacher_id]['timetable']:
+            class_name = entry.class_assigned.name if entry.class_assigned else ""
+            subject_name = entry.subject.name if entry.subject else ""
+            timetable_data[teacher_id]['timetable'][day_name][period_idx] = f"{subject_name} ({class_name})"
+
+    # Prepare context
+    context = {
+        'teachers': teachers,
+        'days': school_days,
+        'period_range': range(1, periods_per_day + 1),
+        'timetable_data_json': json.dumps(timetable_data, cls=DjangoJSONEncoder),
+    }
+    return render(request, 'school_management/timetable/ai_teacher_timetable.html', context)
 
 import logging
 from datetime import datetime, timedelta
@@ -4422,17 +4580,201 @@ def generate_daily_timetable_view(request):
         return HttpResponse("Internal server error.", status=500)
 
 
+
+
+
+from datetime import datetime, timedelta
+from collections import defaultdict
+import random
 from .models import (
-    AITimetableEntry, AITimetableSettings, Class, TeacherAttendance, Teacher
+    SchoolDay,
+    Subject,
+    Teacher_Subject_Class_Relation,
+    AITimetableEntry,
+    AITimetableSettings,
 )
 
+def generate_timetable_for_class(cls, subject_periods):
+    """
+    Generate timetable for a single class using subject_periods dict:
+    {subject_id: periods_assigned}
+    Ensures first period each day is assigned to the class teacher.
+    """
+
+    settings = AITimetableSettings.objects.first()
+    if not settings:
+        raise Exception("Timetable settings not configured.")
+
+    periods_per_day = settings.num_periods
+    days_per_week = 6  # Could be dynamic if needed
+
+    day_code_map = {
+        'Monday': 'Mon', 'Tuesday': 'Tue', 'Wednesday': 'Wed',
+        'Thursday': 'Thu', 'Friday': 'Fri', 'Saturday': 'Sat'
+    }
+    needed_day_codes = list(day_code_map.values())[:days_per_week]
+    school_days = SchoolDay.objects.filter(day_name__in=needed_day_codes).order_by('id')
+
+    # Clear existing timetable entries for this class
+    AITimetableEntry.objects.filter(class_assigned=cls).delete()
+
+    # Get class teacher
+    class_teacher = getattr(cls, 'class_teacher', None)
+
+    # Build subject-teacher map for this class
+    rels = Teacher_Subject_Class_Relation.objects.filter(assigned_classes=cls)
+    subject_teacher_map = {
+        rel.subject.id: rel.teacher for rel in rels if rel.subject and rel.teacher
+    }
+
+    # Ensure break subject exists
+    break_subject, _ = Subject.objects.get_or_create(name="Break")
+
+    # Base time setup
+    base_time = datetime(2000, 1, 1, settings.start_hour, settings.start_minute)
+    period_duration = settings.period_duration
+    gap_minutes = settings.gap_between_periods
+    break_after_1 = settings.break_after_period_1
+    break_after_2 = settings.break_after_period_2
+    break_duration = settings.break_duration
+
+    # Handle class teacher subject
+    class_teacher_subject = None
+    for subject_id, teacher in subject_teacher_map.items():
+        if teacher == class_teacher:
+            class_teacher_subject = Subject.objects.get(id=subject_id)
+            if subject_id in subject_periods:
+                subject_periods[subject_id] = max(subject_periods[subject_id] - days_per_week, 0)
+
+    # Flatten subjects into a list by count
+    subject_list = []
+    for subject_id, count in subject_periods.items():
+        subject_list.extend([subject_id] * count)
+    random.shuffle(subject_list)
+
+    subject_index = 0
+    daily_subject_count = defaultdict(lambda: defaultdict(int))
+
+    for day in school_days:
+        for period in range(1, periods_per_day + 1):
+            # Compute period time
+            minutes_passed = 0
+            for p in range(1, period):
+                minutes_passed += period_duration + gap_minutes
+                if p == break_after_1 or p == break_after_2:
+                    minutes_passed += break_duration
+
+            start_time = (base_time + timedelta(minutes=minutes_passed)).time()
+            end_time = (base_time + timedelta(minutes=minutes_passed + period_duration)).time()
+
+            # Break handling
+            if period == break_after_1 or period == break_after_2:
+                AITimetableEntry.objects.create(
+                    class_assigned=cls,
+                    subject=break_subject,
+                    teacher=None,
+                    school_day=day,
+                    period_number=period,
+                    start_time=start_time,
+                    end_time=end_time
+                )
+                continue
+
+            # First period - assign class teacher subject
+            if period == 1 and class_teacher and class_teacher_subject:
+                AITimetableEntry.objects.create(
+                    class_assigned=cls,
+                    subject=class_teacher_subject,
+                    teacher=class_teacher,
+                    school_day=day,
+                    period_number=period,
+                    start_time=start_time,
+                    end_time=end_time
+                )
+                continue
+
+            # Assign subject from list
+            if not subject_list:
+                continue
+
+            assigned_subject_id = None
+            attempts = 0
+            max_attempts = len(subject_list)
+
+            while attempts < max_attempts:
+                candidate_id = subject_list[subject_index]
+                if daily_subject_count[day.id][candidate_id] < subject_periods.get(candidate_id, 0):
+                    assigned_subject_id = candidate_id
+                    break
+                subject_index = (subject_index + 1) % len(subject_list)
+                attempts += 1
+
+            if assigned_subject_id is None:
+                continue
+
+            teacher = subject_teacher_map.get(assigned_subject_id)
+            subject_obj = Subject.objects.get(id=assigned_subject_id)
+
+            AITimetableEntry.objects.create(
+                class_assigned=cls,
+                subject=subject_obj,
+                teacher=teacher,
+                school_day=day,
+                period_number=period,
+                start_time=start_time,
+                end_time=end_time
+            )
+
+            daily_subject_count[day.id][assigned_subject_id] += 1
+            subject_index = (subject_index + 1) % len(subject_list)
+
+
+from django.views.decorators.http import require_POST
+from django.shortcuts import redirect
+from django.urls import reverse
+from django.contrib import messages
+from .models import Class
+
+@require_POST
+def regenerate_ai_timetable_with_new_periods(request):
+    class_id = request.POST.get('class_id')
+    class_obj = Class.objects.filter(id=class_id).first()
+
+    if not class_obj:
+        messages.error(request, "Invalid class.")
+        return redirect('display_ai_timetable')
+
+    # Parse subject_id → periods mapping
+    subject_periods = {}
+    for key, value in request.POST.items():
+        if key.startswith("subject_periods_"):
+            try:
+                subject_id = int(key.replace("subject_periods_", ""))
+                period_count = int(value)
+                if period_count > 0:
+                    subject_periods[subject_id] = period_count
+            except (ValueError, TypeError):
+                continue
+
+    try:
+        generate_timetable_for_class(class_obj, subject_periods)
+        messages.success(request, "Timetable regenerated successfully.")
+    except Exception as e:
+        messages.error(request, f"Timetable generation failed: {e}")
+
+    return redirect(f"{reverse('display_ai_timetable')}?class_id={class_obj.id}")
+
+
+
 from collections import defaultdict
+from datetime import date
 from django.shortcuts import render
-from .models import Class, AITimetableEntry, SchoolDay
+from .models import Class, AITimetableEntry, SchoolDay, Subject
 
 def display_ai_timetable(request):
     selected_date = request.GET.get('date', date.today().isoformat())
     today = date.today()
+
     # Get all classes for dropdown
     all_classes = Class.objects.all()
     
@@ -4494,11 +4836,15 @@ def display_ai_timetable(request):
     subject_hours = defaultdict(int)
     for entry in entries:
         if entry.subject and entry.subject.name.lower() != 'break':
-            subject_hours[entry.subject.name] += 1
+            subject_hours[entry.subject] += 1  # Use Subject object as key
 
-    # Create list for template
+    # Create summary list for the template with subject.id
     subject_summary = [
-        {'subject': subject, 'periods': count}
+        {
+            'subject_id': subject.id,
+            'subject': subject.name,
+            'periods': count
+        }
         for subject, count in subject_hours.items()
     ]
 
@@ -4508,22 +4854,11 @@ def display_ai_timetable(request):
         'period_timings': period_timings,
         'timetable_rows': timetable_rows,
         'subject_summary': subject_summary,
-          "selected_date": selected_date,
-        "today"  : today
+        'selected_date': selected_date,
+        'today': today
     }
 
     return render(request, 'school_management/Timetable/AI_timetable_display.html', context)
-
-
-from datetime import datetime, timedelta
-from django.shortcuts import render, redirect
-import logging
-
-from .models import (
-    AITimetableEntry, DailyTimeTableEntry, TeacherAttendance,
-    SubstituteAssignment, SchoolDay, Teacher_Subject_Class_Relation,
-    AITimetableSettings
-)
 
 logger = logging.getLogger(__name__)
 
@@ -4927,3 +5262,37 @@ def school_profile_view(request):
         return HttpResponse("School profile updated successfully.")
 
     return render(request, 'school_management/admin/school_profile.html', {'profile': profile})
+
+def teacher_list_view(request):
+    teachers = Teacher.objects.all()
+    return render(request, 'school_management/Teacher/teachers_list.html', {'teachers': teachers})
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from .models import Teacher
+
+@csrf_exempt  # Disable CSRF for simplicity — in production, handle this securely!
+def delete_teacher_api(request, teacher_id):
+    if request.method == 'DELETE':
+        try:
+            teacher = Teacher.objects.get(id=teacher_id)
+            teacher.delete()
+            return JsonResponse({'success': True})
+        except Teacher.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Teacher not found'})
+    return JsonResponse({'success': False, 'error': 'Invalid method'})
+
+from django.shortcuts import redirect, get_object_or_404
+from django.views.decorators.http import require_POST
+from .models import Student  # or your model name
+
+from django.contrib import messages
+
+@require_POST
+def delete_transferred_student(request, student_id):
+    try:
+        student = TransferredStudent.objects.get(id=student_id)
+        student.delete()
+        messages.success(request, "Student deleted successfully.")
+    except Student.DoesNotExist:
+        messages.error(request, "Student not found.")
+    return redirect('transferred_student_list')

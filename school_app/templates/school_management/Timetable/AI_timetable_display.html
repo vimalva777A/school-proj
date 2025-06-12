@@ -64,6 +64,7 @@
             <li><a class="dropdown-item" href="/teacher_subject_class_table">Teacher Subject Class Table</a></li>
             <li><a class="dropdown-item" href="/classroom_overview">Classroom Overview</a></li>
             <li><a class="dropdown-item" href="/ai_timetable_setup_pg">Auto Generate Timetable</a></li>
+            
           </ul>
         </li>
 
@@ -77,7 +78,8 @@
         <li class="nav-item"><a class="nav-link" href="/create_academic_year">Academic Year</a></li>
         <li class="nav-item"><a class="nav-link" href="/year_planner/">Year Planner</a></li>
         <li class="nav-item"><a class="nav-link" href="/exam_department">Exam Dept.</a></li>
-        <li class="nav-item"><a class="nav-link" href="/teacher_dashboard">Teacher Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="/teacher_dashboard">Teacher Dashboard</a></li>      
+        <li class="nav-item"><a class="nav-link" href="/principal_dashboard">Principal Dashboard</a></li>
         <li class="nav-item"><a class="nav-link" href="/student_assessment_report">Students Assessment</a></li>
 
         <li class="nav-item dropdown">
@@ -133,17 +135,37 @@
 <h1>AI Generated Timetable</h1>
 
 {% if timetable_rows %}
-  <h4>Subject Period Summary (Weekly)</h4>
+<!-- Subject Period Summary (Weekly) Form -->
+<h4>Subject Period Summary (Weekly)</h4>
+<form method="post" action="{% url 'regenerate_ai_timetable_with_new_periods' %}">
+  {% csrf_token %}
+  <input type="hidden" name="class_id" value="{{ class_obj.id }}">
   <table class="table table-bordered summary-table">
     <thead>
-      <tr><th>Subject</th><th>Periods Assigned</th></tr>
+      <tr>
+        <th>Subject</th>
+        <th>Periods Assigned</th>
+      </tr>
     </thead>
     <tbody>
       {% for summary in subject_summary %}
-        <tr><td>{{ summary.subject }}</td><td>{{ summary.periods }}</td></tr>
+        <tr>
+          <td>{{ summary.subject }}</td>
+          <td>
+            <input type="number"
+                   name="subject_periods_{{ summary.subject_id }}"
+                   value="{{ summary.periods }}"
+                   class="form-control"
+                   min="0"
+                   required>
+          </td>
+        </tr>
       {% endfor %}
     </tbody>
   </table>
+  <button type="submit" class="btn btn-primary">Regenerate Timetable</button>
+</form>
+
 
   <table class="table table-bordered table-striped">
     <thead class="table-primary">

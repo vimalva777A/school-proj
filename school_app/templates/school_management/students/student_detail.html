@@ -2,33 +2,102 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Student Detail - {{ student.name }}</title>
 
-  <!-- CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-
-  <!-- JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.25/dist/jspdf.plugin.autotable.min.js" defer></script>
 
-  <!-- Custom Styles -->
   <style>
-    body { padding-top: 70px; background-color: #f8f9fa; }
-    .navbar { position: fixed; top: 0; width: 100%; z-index: 1000; background-color: #007bff; }
-    .navbar .navbar-brand, .navbar .nav-link { color: white; font-weight: bold; }
-    .navbar .nav-link:hover { color: #ffd700; }
-    .dropdown-menu { background-color: #007bff; }
-    .dropdown-item { color: white; }
-    .dropdown-item:hover { background-color: #0056b3; color: #ffd700; }
-    .table th, .table td { border: 1px solid #dee2e6; vertical-align: middle; padding: 0.5rem; }
-    .table-striped tbody tr:nth-of-type(odd) { background-color: #f2f2f2; }
-    .btn-custom { background-color: #28a745; color: white; }
-    .btn-custom:hover { background-color: #218838; }
-    .card-header, .table th { text-align: center; }
-    canvas { max-width: 100%; }
+    body {
+      padding-top: 80px;
+      background-color: #f8f9fa;
+    }
+    .navbar {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 1000;
+      background-color: #007bff;
+    }
+    .navbar .navbar-brand,
+    .navbar .nav-link {
+      color: white;
+      font-weight: 600;
+    }
+    .navbar .nav-link:hover,
+    .navbar .nav-link.active {
+      color: #ffd700;
+    }
+    .dropdown-menu {
+      background-color: #007bff;
+    }
+    .dropdown-item {
+      color: white;
+    }
+    .dropdown-item:hover {
+      background-color: #0056b3;
+      color: #ffd700;
+    }
+    .card-header,
+    .table th {
+      text-align: center;
+    }
+    .table th,
+    .table td {
+      border: 1px solid #dee2e6;
+      vertical-align: middle;
+      padding: 0.5rem;
+    }
+    .table-striped tbody tr:nth-of-type(odd) {
+      background-color: #f2f2f2;
+    }
+    .btn-custom {
+      background-color: #28a745;
+      color: white;
+    }
+    .btn-custom:hover {
+      background-color: #218838;
+    }
+    canvas {
+      max-width: 100%;
+      height: 300px !important;
+    }
+    /* Certificate style header */
+    .certificate-header {
+      text-align: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 3px double #333;
+      font-family: "Georgia", serif;
+      color: #222;
+    }
+    .certificate-header img {
+      max-height: 100px;
+      margin-bottom: 0.5rem;
+    }
+    .certificate-header .school-name {
+      font-size: 2.8rem;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 0.2rem;
+      color: #0d6efd;
+    }
+    .certificate-header .school-address {
+      font-size: 1.1rem;
+      font-style: italic;
+      margin-bottom: 0.3rem;
+      color: #555;
+    }
+    .certificate-header .school-contact {
+      font-size: 0.9rem;
+      color: #666;
+      letter-spacing: 1px;
+    }
   </style>
 </head>
 <body>
@@ -37,55 +106,141 @@
 <nav class="navbar navbar-expand-lg navbar-dark">
   <div class="container-fluid">
     <a class="navbar-brand" href="#">School Management</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#navbarNav"
+      aria-controls="navbarNav"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav">
         <li class="nav-item">
-          <a class="nav-link {% if request.path == '/student_assessment_report/' %}active{% endif %}" href="{% url 'student_assessment_report' %}">Assessment List</a>
+          <a
+            class="nav-link {% if request.path == '/student_assessment_report/' %}active{% endif %}"
+            href="{% url 'student_assessment_report' %}"
+            >Assessment List</a
+          >
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="{% url 'student_internal_assessment' student.id %}">Internal Assessment</a>
+          <a class="nav-link" href="{% url 'student_internal_assessment' student.id %}"
+            >Internal Assessment</a
+          >
+        </li>
+           <li class="nav-item">
+          <a class="nav-link" href="{% url 'principal_dashboard' %}"
+            >Principal Dashboard</a>
         </li>
       </ul>
     </div>
   </div>
 </nav>
 
-<!-- Main Content -->
-<main class="container mt-5">
-  <h2 class="mb-4 text-center">{{ student.name }}</h2>
+<!-- Certificate Style School Header -->
+{% if school_profile %}
+<div class="container mt-4">
+  <div class="certificate-header">
+    {% if school_profile.logo %}
+    <img src="{{ school_profile.logo.url }}" alt="School Logo" />
+    {% endif %}
+    <div class="school-name">{{ school_profile.name }}</div>
+    <div class="school-address">{{ school_profile.address }}</div>
+    <div class="school-contact">
+      📞 {{ school_profile.phone_number }} | ✉️ {{ school_profile.email }} | Principal: {{ school_profile.principal_name }}
+    </div>
+  </div>
+</div>
+{% endif %}
 
+<!-- Student Info Card -->
+<div class="container">
+  <div class="card shadow-sm border-0 mb-4">
+    <div class="card-body d-flex align-items-center">
+      {% if student.photo %}
+      <img
+        src="{{ student.photo.url }}"
+        alt="Student Photo"
+        class="rounded-circle me-4"
+        style="height: 70px"
+      />
+      {% endif %}
+      <div>
+        <h5 class="mb-0">{{ student.name }}</h5>
+        <small class="text-muted"
+          >Class: {{ class_name }} | Academic Year:
+          {{ student.academic_year.name }}</small
+        >
+      </div>
+    </div>
+  </div>
+</div>
+
+<main class="container">
+  <!-- Info & Attendance -->
   <div class="row">
-    <!-- Student Info -->
     <section class="col-md-6 mb-4">
       <div class="card">
         <div class="card-header bg-primary text-white">Student Information</div>
         <div class="card-body">
           <table class="table table-sm table-bordered mb-0">
-            <tr><th>Name</th><td>{{ student.name }}</td></tr>
-            <tr><th>Class</th><td>{{ class_name }}</td></tr>
-            <tr><th>Parent Name</th><td>{{ parent.name }}</td></tr>
-            <tr><th>Email</th><td>{{ parent.email }}</td></tr>
-            <tr><th>Phone</th><td>{{ parent.phone_number }}</td></tr>
+            <tbody>
+              <tr>
+                <th>Name</th>
+                <td>{{ student.name }}</td>
+              </tr>
+              <tr>
+                <th>Class</th>
+                <td>{{ class_name }}</td>
+              </tr>
+              <tr>
+                <th>Parent Name</th>
+                <td>{{ parent.name }}</td>
+              </tr>
+              <tr>
+                <th>Email</th>
+                <td>{{ parent.email }}</td>
+              </tr>
+              <tr>
+                <th>Phone</th>
+                <td>{{ parent.phone_number }}</td>
+              </tr>
+            </tbody>
           </table>
         </div>
       </div>
     </section>
 
-    <!-- Attendance Summary -->
     <section class="col-md-6 mb-4">
       <div class="card">
         <div class="card-header bg-primary text-white">Attendance Summary</div>
         <div class="card-body">
           <table class="table table-sm table-bordered table-striped mb-0">
-            <thead><tr><th>Status</th><th>Count</th></tr></thead>
-            <tr><td>Present</td><td>{{ attendance_counts.Present }}</td></tr>
-            <tr><td>Absent</td><td>{{ attendance_counts.Absent }}</td></tr>
-            <tr><td>Late</td><td>{{ attendance_counts.Late }}</td></tr>
-            <tr><td>Excused</td><td>{{ attendance_counts.Excused }}</td></tr>
-            <tr><td>Total Working Days</td><td>{{ total_working_days }}</td></tr>
+            <tbody>
+              <tr>
+                <td>Present</td>
+                <td>{{ attendance_counts.Present }}</td>
+              </tr>
+              <tr>
+                <td>Absent</td>
+                <td>{{ attendance_counts.Absent }}</td>
+              </tr>
+              <tr>
+                <td>Late</td>
+                <td>{{ attendance_counts.Late }}</td>
+              </tr>
+              <tr>
+                <td>Excused</td>
+                <td>{{ attendance_counts.Excused }}</td>
+              </tr>
+              <tr>
+                <td>Total Working Days</td>
+                <td>{{ total_working_days }}</td>
+              </tr>
+            </tbody>
           </table>
         </div>
       </div>
@@ -94,41 +249,63 @@
 
   <!-- Exam Results -->
   <section class="card mb-4">
-    <div class="card-header bg-primary text-white"><h5 class="mb-0">Exam Results</h5></div>
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0">Exam Results</h5>
+    </div>
     <div class="card-body">
       <form method="get" id="filter-form" class="mb-3">
         <label for="exam" class="form-label">Exam</label>
-        <select name="exam" id="exam" class="form-select" onchange="this.form.submit()">
-          <option value="" {% if not selected_exam_id %}selected{% endif %}>All Exams</option>
+        <select
+          name="exam"
+          id="exam"
+          class="form-select"
+          onchange="this.form.submit()"
+        >
+          <option value="" {% if not selected_exam_id %}selected{% endif %}>
+            All Exams
+          </option>
           {% for exam in exams %}
-            <option value="{{ exam.id }}" {% if exam.id|stringformat:"s" == selected_exam_id|stringformat:"s" %}selected{% endif %}>
-              {{ exam.name }}
-            </option>
+          <option
+            value="{{ exam.id }}"
+            {% if exam.id|stringformat:"s" == selected_exam_id|stringformat:"s" %}
+            selected
+            {% endif %}
+          >
+            {{ exam.name }}
+          </option>
           {% endfor %}
         </select>
       </form>
 
       <div class="table-responsive">
         <table class="table table-bordered table-striped">
-          <thead class="table-light">
-            <tr><th>Subject</th><th>Obtained</th><th>Total</th><th>Percentage</th><th>Remarks</th></tr>
+          <thead class="table-light text-center">
+            <tr>
+              <th>Subject</th>
+              <th>Obtained</th>
+              <th>Total</th>
+              <th>Percentage</th>
+              <th>Remarks</th>
+            </tr>
           </thead>
           <tbody>
             {% for subject_id, subject_data in marks_data.items %}
-              <tr>
-                <td>{{ subject_data.subject.name }}</td>
-                <td>{{ subject_data.marks_obtained }}</td>
-                <td>{{ subject_data.total_marks }}</td>
-                <td>{{ subject_data.percentage }}%</td>
-                <td>{{ subject_data.remark }}</td>
-              </tr>
+            <tr>
+              <td>{{ subject_data.subject.name }}</td>
+              <td class="text-center">{{ subject_data.marks_obtained }}</td>
+              <td class="text-center">{{ subject_data.total_marks }}</td>
+              <td class="text-center">{{ subject_data.percentage }}%</td>
+              <td>{{ subject_data.remark }}</td>
+            </tr>
             {% empty %}
-              <tr><td colspan="5" class="text-center">No exam results available.</td></tr>
+            <tr>
+              <td colspan="5" class="text-center">No exam results available.</td>
+            </tr>
             {% endfor %}
           </tbody>
           {% if total_marks_obtained %}
           <tfoot>
-            <tr class="table-primary fw-bold">
+            <tr class="table-primary fw-bold text-center">
               <td>Total</td>
               <td>{{ total_marks_obtained }}</td>
               <td>{{ total_max_marks }}</td>
@@ -142,94 +319,271 @@
     </div>
   </section>
 
-  {% if total_marks_obtained %}
   <!-- Performance Chart -->
+  {% if total_marks_obtained %}
   <section class="card mb-4">
-    <div class="card-header bg-primary text-white"><h5 class="mb-0">Performance Chart</h5></div>
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0">Performance Chart</h5>
+    </div>
     <div class="card-body">
       <canvas id="performanceChart"></canvas>
     </div>
   </section>
-
-  <!-- Export & Marksheet Buttons -->
-  <div class="text-end mb-5">
-    <button id="export-pdf" class="btn btn-custom">Export as PDF</button>
-    <a href="{% url 'student_marksheet' student.id %}" class="btn btn-secondary ms-2">View Marksheet</a>
-  </div>
   {% endif %}
 
-  <form action="{% url 'transfer_student' student.id %}" method="post" onsubmit="return confirm('Are you sure you want to transfer this student? This action cannot be undone.');">
-    {% csrf_token %}
-    <button type="submit" class="btn btn-danger mt-3">Transfer Student</button>
-  </form>
+  <!-- Actions -->
+ <div class="text-end mb-5">
+  <div class="d-flex flex-wrap justify-content-end gap-2">
 
-</main>
+    <button id="export-pdf" class="btn btn-custom">
+      Export as PDF
+    </button>
 
-<!-- Chart & PDF Script -->
+    <a href="{% url 'student_marksheet' student.id %}" class="btn btn-primary">
+      View Marksheet
+    </a>
+
+    <a href="{% url 'edit_student_profile' student.id %}" class="btn btn-success">
+      Edit Student Profile
+    </a>
+
+    <form action="{% url 'transfer_student' student.id %}" method="post" onsubmit="return confirm('Are you sure you want to transfer this student?');">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">
+        Transfer Student
+      </button>
+    </form>
+
+  </div>
+</div>
+
+  <!-- Transfer Student -->
+
+
+
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener("DOMContentLoaded", () => {
     const labels = [{% for _, subject_data in marks_data.items %}"{{ subject_data.subject.name }}",{% endfor %}];
     const dataValues = [{% for _, subject_data in marks_data.items %}{{ subject_data.percentage }},{% endfor %}];
 
-    if (labels.length > 0 && document.getElementById('performanceChart')) {
-      const ctx = document.getElementById('performanceChart').getContext('2d');
-      new Chart(ctx, {
-        type: 'bar',
+    let chartInstance = null;
+
+    if (labels.length > 0 && document.getElementById("performanceChart")) {
+      const ctx = document.getElementById("performanceChart").getContext("2d");
+      chartInstance = new Chart(ctx, {
+        type: "bar",
         data: {
           labels: labels,
-          datasets: [{
-            label: 'Percentage',
-            data: dataValues,
-            backgroundColor: '#007bff',
-            borderRadius: 5
-          }]
+          datasets: [
+            {
+              label: "Percentage",
+              data: dataValues,
+              backgroundColor: "#007bff",
+              borderRadius: 5,
+            },
+          ],
         },
         options: {
           responsive: true,
+          maintainAspectRatio: false,
           plugins: {
             legend: { display: false },
-            tooltip: { enabled: true }
           },
           scales: {
             y: {
               beginAtZero: true,
               max: 100,
-              title: { display: true, text: 'Percentage' }
-            }
-          }
-        }
+              ticks: {
+                stepSize: 10,
+                callback: function (value) {
+                  return value + "%";
+                },
+              },
+            },
+          },
+        },
       });
     }
 
-    const exportBtn = document.getElementById('export-pdf');
+    const exportBtn = document.getElementById("export-pdf");
     if (exportBtn) {
-      exportBtn.addEventListener('click', () => {
+      exportBtn.addEventListener("click", () => {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        doc.setFontSize(16);
-        doc.text('Student Report', 14, 20);
 
-        const studentInfo = [
-          ['Name', '{{ student.name }}'],
-          ['Class', '{{ class_name }}'],
-          ['Parent Name', '{{ parent.name }}'],
-          ['Email', '{{ parent.email }}'],
-          ['Phone', '{{ parent.phone_number }}']
-        ];
-        doc.autoTable({ head: [['Field', 'Value']], body: studentInfo, startY: 30 });
+        const margin = 15;
+        let yOffset = 20;
+        const pageWidth = doc.internal.pageSize.getWidth();
 
-        const results = [];
-        {% for _, subject_data in marks_data.items %}
-          results.push(["{{ subject_data.subject.name }}", "{{ subject_data.marks_obtained }}", "{{ subject_data.total_marks }}", "{{ subject_data.percentage }}%", "{{ subject_data.remark }}"]);
-        {% endfor %}
+        // Title
+        doc.setFontSize(18);
+        doc.setFont("helvetica", "bold");
+        doc.text("Student Performance Report", pageWidth / 2, yOffset, { align: "center" });
+        yOffset += 10;
 
-        doc.autoTable({
-          head: [['Subject', 'Obtained', 'Total', 'Percentage', 'Remarks']],
-          body: results,
-          startY: doc.lastAutoTable.finalY + 10
-        });
+        // School header (logo and details)
+        {% if school_profile.logo %}
+        const logo = new Image();
+        logo.crossOrigin = "anonymous";
+        logo.src = "{{ school_profile.logo.url }}";
+        logo.onload = function () {
+          const scaleFactor = 30 / logo.height;
+          const logoWidth = logo.width * scaleFactor;
+          doc.addImage(logo, "PNG", margin, yOffset, logoWidth, 30);
+          renderSchoolDetails(yOffset);
+        };
+        logo.onerror = function () {
+          renderSchoolDetails(yOffset);
+        };
+        {% else %}
+        renderSchoolDetails(yOffset);
+        {% endif %}
 
-        doc.save("student_report.pdf");
+        function renderSchoolDetails(startY) {
+          let y = startY;
+
+          // If logo exists, we pushed it 30px down, so offset details below that
+          y += 35;
+
+          doc.setFontSize(12);
+          doc.setFont("helvetica", "normal");
+          doc.text("School Name: {{ school_profile.name }}", margin, y);
+          y += 7;
+          doc.text("Address: {{ school_profile.address }}", margin, y);
+          y += 7;
+          doc.text("Phone: {{ school_profile.phone_number }}", margin, y);
+          y += 7;
+          doc.text("Email: {{ school_profile.email }}", margin, y);
+          y += 7;
+          doc.text("Principal: {{ school_profile.principal_name }}", margin, y);
+          y += 15;
+
+          renderStudentInfo(y);
+        }
+
+        function renderStudentInfo(startY) {
+          let y = startY;
+
+          doc.setFontSize(14);
+          doc.setFont("helvetica", "bold");
+          doc.text("Student Information", margin, y);
+          y += 7;
+
+          doc.setFontSize(12);
+          doc.setFont("helvetica", "normal");
+
+          const studentInfo = [
+            ["Name", "{{ student.name }}"],
+            ["Class", "{{ class_name }}"],
+            ["Parent Name", "{{ parent.name }}"],
+            ["Email", "{{ parent.email }}"],
+            ["Phone", "{{ parent.phone_number }}"],
+          ];
+
+          studentInfo.forEach(info => {
+            doc.text(`${info[0]}: ${info[1]}`, margin, y);
+            y += 7;
+          });
+          y += 10;
+
+          renderAttendance(y);
+        }
+
+        function renderAttendance(startY) {
+          let y = startY;
+
+          doc.setFontSize(14);
+          doc.setFont("helvetica", "bold");
+          doc.text("Attendance Summary", margin, y);
+          y += 7;
+
+          doc.setFontSize(12);
+          doc.setFont("helvetica", "normal");
+
+          const attendanceInfo = [
+            ["Present", "{{ attendance_counts.Present }}"],
+            ["Absent", "{{ attendance_counts.Absent }}"],
+            ["Late", "{{ attendance_counts.Late }}"],
+            ["Excused", "{{ attendance_counts.Excused }}"],
+            ["Total Working Days", "{{ total_working_days }}"],
+          ];
+
+          attendanceInfo.forEach(info => {
+            doc.text(`${info[0]}: ${info[1]}`, margin, y);
+            y += 7;
+          });
+          y += 10;
+
+          renderExamResults(y);
+        }
+
+        function renderExamResults(startY) {
+          let y = startY;
+
+          doc.setFontSize(14);
+          doc.setFont("helvetica", "bold");
+          doc.text("Exam Results", margin, y);
+          y += 7;
+
+          // Prepare table body
+          const results = [
+            {% for _, subject_data in marks_data.items %}
+              ["{{ subject_data.subject.name }}", "{{ subject_data.marks_obtained }}", "{{ subject_data.total_marks }}", "{{ subject_data.percentage }}%", "{{ subject_data.remark }}"],
+            {% endfor %}
+          ];
+
+          if(results.length > 0){
+            doc.autoTable({
+              head: [["Subject", "Obtained", "Total", "Percentage", "Remarks"]],
+              body: results,
+              startY: y,
+              margin: { left: margin, right: margin },
+              styles: { fontSize: 10 },
+              headStyles: { fillColor: [0, 123, 255] },
+              theme: "striped",
+              didDrawPage: (data) => {
+                y = data.cursor.y + 10;
+              }
+            });
+
+            y = doc.lastAutoTable.finalY + 10;
+
+            // Add totals if available
+            {% if total_marks_obtained %}
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "bold");
+            doc.text(`Total Marks Obtained: {{ total_marks_obtained }}`, margin, y);
+            y += 7;
+            doc.text(`Total Maximum Marks: {{ total_max_marks }}`, margin, y);
+            y += 7;
+            doc.text(`Overall Percentage: {{ percentage }}%`, margin, y);
+            y += 15;
+            {% endif %}
+          } else {
+            doc.setFontSize(12);
+            doc.text("No exam results available.", margin, y);
+            y += 15;
+          }
+
+          renderChart(y);
+        }
+
+        function renderChart(startY) {
+          let y = startY;
+
+          if (chartInstance) {
+            const chartCanvas = document.getElementById("performanceChart");
+            const chartImg = chartCanvas.toDataURL("image/png", 1.0);
+
+            // Calculate image size (max width 180, preserve aspect ratio)
+            const imgWidth = 180;
+            const imgHeight = (chartCanvas.height / chartCanvas.width) * imgWidth;
+
+            doc.addImage(chartImg, "PNG", margin, y, imgWidth, imgHeight);
+          }
+
+          doc.save("student_performance_report_{{ student.id }}.pdf");
+        }
       });
     }
   });

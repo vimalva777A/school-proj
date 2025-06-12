@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI Teacher Timetable</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body {
+      background-color: #f8f9fa;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding-top: 70px;
+    }
+    .navbar-custom {
+      background-color: #0d6efd;
+    }
+    .navbar-custom .navbar-brand,
+    .navbar-custom .nav-link {
+      color: white;
+    }
+    .navbar-custom .nav-link.active,
+    .navbar-custom .nav-link:hover {
+      color: #ffc107;
+      background-color: transparent;
+    }
+    .navbar-custom .dropdown-menu {
+      background-color: #0d6efd;
+    }
+    .navbar-custom .dropdown-menu .dropdown-item {
+      color: white;
+    }
+    .navbar-custom .dropdown-menu .dropdown-item:hover {
+      background-color: #0a58ca;
+      color: #ffc107;
+    }
+    .teacher-header {
+      background-color: #0d6efd;
+      color: white;
+      padding: 10px 15px;
+      font-size: 1.2rem;
+      border-radius: 5px 5px 0 0;
+      margin-bottom: 0;
+    }
+    .timetable-table th,
+    .timetable-table td {
+      text-align: center;
+      vertical-align: middle;
+      font-size: 0.9rem;
+      min-width: 80px;
+      white-space: nowrap;
+    }
+    .table-responsive {
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg navbar-dark navbar-custom fixed-top">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="#">School System</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="/student_enrollment">Student Enrollment</a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">Admin Tools</a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="/school_profile_view">School Profile</a></li>
+            <li><a class="dropdown-item" href="/teacher_enrollment_pg">Teacher Enrollment</a></li>
+            <li><a class="dropdown-item" href="/class_creation_pg">Class Creation</a></li>
+            <li><a class="dropdown-item" href="/class_subject_management_pg">Class Subject Management</a></li>
+            <li><a class="dropdown-item" href="/assign_class_teachers_view">Assign Class Teacher</a></li>
+            <li><a class="dropdown-item" href="/transferred_student_list">Transferred Students List</a></li>
+          </ul>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="timetableDropdown" role="button" data-bs-toggle="dropdown">Timetable</a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="/display_ai_timetable">Timetable</a></li>
+            <li><a class="dropdown-item" href="/ai_teacher_timetable_view">Teacher Timetable</a></li>
+            <li><a class="dropdown-item" href="/daily_timetable_view">Daily Timetable</a></li>
+            <li><a class="dropdown-item" href="/free_teachers_view">Free Teachers</a></li>
+            <li><a class="dropdown-item" href="/teacher_subject_class_table">Teacher Subject Class Table</a></li>
+            <li><a class="dropdown-item" href="/classroom_overview">Classroom Overview</a></li>
+            <li><a class="dropdown-item" href="/ai_timetable_setup_pg">Auto Generate Timetable</a></li>
+          </ul>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="attendanceDropdown" role="button" data-bs-toggle="dropdown">Attendance</a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="/attendance_view">Student Attendance</a></li>
+            <li><a class="dropdown-item" href="/mark_teacher_attendance_view">Teacher Attendance</a></li>
+          </ul>
+        </li>
+        <li class="nav-item"><a class="nav-link" href="/create_academic_year">Academic Year</a></li>
+        <li class="nav-item"><a class="nav-link" href="/year_planner/">Year Planner</a></li>
+        <li class="nav-item"><a class="nav-link" href="/exam_department">Exam Dept.</a></li>
+        <li class="nav-item"><a class="nav-link" href="/teacher_dashboard">Teacher Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="/student_assessment_report">Students Assessment</a></li>
+        <li class="nav-item"><a class="nav-link" href="/teacher_list_view">Teachers List</a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="mediaDropdown" role="button" data-bs-toggle="dropdown">Media</a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="/media_upload">Upload</a></li>
+            <li><a class="dropdown-item" href="/media_gallery">Gallery</a></li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- PAGE CONTENT -->
+<div class="container mt-4">
+  <h2 class="text-center mb-4">AI-Generated Teacher Timetable</h2>
+
+  <div class="mb-4">
+    <label for="teacherSelect" class="form-label">Select Teacher:</label>
+    <select id="teacherSelect" class="form-select" onchange="showTimetable()">
+      <option value="" selected disabled>-- Select Teacher --</option>
+      {% for teacher in teachers %}
+        <option value="{{ teacher.id }}">{{ teacher.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div id="actionButtons" class="mb-3 d-none">
+    <button class="btn btn-primary me-2" onclick="printDiv('timetableDiv')">Print</button>
+    <button class="btn btn-success me-2" onclick="exportTableToExcel('timetableTable', 'teacher_timetable.xlsx')">Export to Excel</button>
+    <button class="btn btn-danger" onclick="exportDivToPDF('timetableDiv', 'teacher_timetable.pdf')">Export to PDF</button>
+  </div>
+
+  <div id="timetableDiv" class="card p-3 d-none">
+    <h3 class="teacher-header" id="teacherName"></h3>
+    <div class="table-responsive">
+      <table id="timetableTable" class="table table-bordered timetable-table mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Day</th>
+            {% for p in period_range %}
+              <th>P{{ p }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody id="timetableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  const timetableData = {{ timetable_data_json|safe }};
+  const days = [{% for day in days %}'{{ day.day_name }}',{% endfor %}];
+
+  function showTimetable() {
+    const teacherId = document.getElementById('teacherSelect').value;
+    const timetableDiv = document.getElementById('timetableDiv');
+    const timetableBody = document.getElementById('timetableBody');
+    const teacherName = document.getElementById('teacherName');
+    const actionButtons = document.getElementById('actionButtons');
+
+    if (!teacherId || !timetableData[teacherId]) {
+      timetableDiv.classList.add('d-none');
+      actionButtons.classList.add('d-none');
+      return;
+    }
+
+    const teacher = timetableData[teacherId];
+    teacherName.textContent = teacher.name;
+    timetableBody.innerHTML = '';
+
+    days.forEach(day => {
+      const tr = document.createElement('tr');
+      tr.appendChild(Object.assign(document.createElement('td'), { textContent: day }));
+      teacher.timetable[day].forEach(periodText => {
+        const td = document.createElement('td');
+        td.textContent = periodText || '';
+        tr.appendChild(td);
+      });
+      timetableBody.appendChild(tr);
+    });
+
+    timetableDiv.classList.remove('d-none');
+    actionButtons.classList.remove('d-none');
+  }
+
+  function printDiv(divId) {
+    const divToPrint = document.getElementById(divId);
+    const newWin = window.open('', 'Print-Window');
+    newWin.document.open();
+    newWin.document.write(`
+      <html><head><title>Print Timetable</title>
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+      <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #000; padding: 8px; text-align: center; }
+        h3 { background-color: #0d6efd; color: white; padding: 10px; border-radius: 5px; }
+      </style>
+      </head><body onload="window.print();window.close()">${divToPrint.innerHTML}</body></html>`);
+    newWin.document.close();
+  }
+
+  function exportTableToExcel(tableId, filename = '') {
+    const table = document.getElementById(tableId);
+    let csv = Array.from(table.rows).map(row =>
+      Array.from(row.cells).map(cell =>
+        `"${cell.innerText.replace(/"/g, '""')}"`
+      ).join(',')
+    ).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.setAttribute('href', URL.createObjectURL(blob));
+    link.setAttribute('download', filename);
+    link.click();
+  }
+
+  function loadScript(url) {
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = url;
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  }
+
+  async function exportDivToPDF(divId, filename) {
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+    const { jsPDF } = window.jspdf;
+    const div = document.getElementById(divId);
+    html2canvas(div).then(canvas => {
+      const pdf = new jsPDF('l', 'pt', [canvas.width, canvas.height]);
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, canvas.width, canvas.height);
+      pdf.save(filename);
+    });
+  }
+</script>
+
+</body>
+</html>
